@@ -1,27 +1,38 @@
 package com.github.masooh.intellij.plugin.javaToGroovy;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
 
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.actions.AbstractPerformFixesTask;
+import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.codeInspection.actions.CleanupInspectionUtil;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.refactoring.actions.MoveAction;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.util.SequentialModalProgressTask;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author masooh
@@ -31,7 +42,7 @@ public class ConvertJavaToGroovy extends AnAction {
 
 	@Override
 	public void actionPerformed(AnActionEvent event) {
-//		Project project = event.getProject();
+		Project project = event.getProject();
 //		VirtualFile currentFile = event.getData(PlatformDataKeys.VIRTUAL_FILE);
 //		VirtualFile grovoySourceRoot = createGrovoySourceRoot(project, currentFile);
 //
@@ -41,10 +52,57 @@ public class ConvertJavaToGroovy extends AnAction {
 
 //		applyGroovyStyle(event);
 
-		Object navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
-		if (navigatable != null) {
-			Messages.showDialog(navigatable.toString(), "Selected Element:", new String[]{"OK"}, -1, null);
-		}
+//		Object navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
+//		if (navigatable != null) {
+//			Messages.showDialog(navigatable.toString(), "Selected Element:", new String[]{"OK"}, -1, null);
+//		}
+
+		PsiFile file = event.getRequiredData(PlatformDataKeys.PSI_FILE);
+		Editor editor = event.getRequiredData(PlatformDataKeys.EDITOR);
+
+		final List<InspectionToolWrapper> inspectionToolWrappers = InspectionToolRegistrar.getInstance().get();
+
+		/*
+		inspectionToolWrappers.stream()
+        .filter(inspectionToolWrapper -> inspectionToolWrapper.getLanguage() != null && inspectionToolWrapper.getLanguage().equalsIgnoreCase("groovy"))
+        .collect(Collectors.toList());
+		 */
+
+        Optional<InspectionToolWrapper> groovySemicolon = inspectionToolWrappers.stream()
+//                .filter(inspectionToolWrapper -> inspectionToolWrapper.getDisplayName().contains("semicolon"))
+                .filter(inspectionToolWrapper -> inspectionToolWrapper.getShortName().equals("JavaStylePropertiesInvocation"))
+                .filter(inspectionToolWrapper -> inspectionToolWrapper.getLanguage().equals("Groovy"))
+                .findAny();
+
+
+        if (groovySemicolon.isPresent()) {
+
+            InspectionToolWrapper inspectionToolWrapper = groovySemicolon.get();
+
+            // inspired by CleanupInspectionIntention
+            final List<ProblemDescriptor> descriptions =
+                    ProgressManager.getInstance().runProcess(() -> {
+                        InspectionManager inspectionManager = InspectionManager.getInstance(project);
+                        // TODO prüfen, ob es andere Methode gibt, die mehrere inspectionToolWrapper nehmen kann
+                        // TODO import keymap from Ultimate
+                        return InspectionEngine.runInspectionOnFile(file, groovySemicolon.get(), inspectionManager.createNewGlobalContext(false));
+                    }, new EmptyProgressIndicator());
+
+            if (!descriptions.isEmpty() && !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+
+            System.out.println(descriptions.size());
+            System.out.println(descriptions);
+
+            AbstractPerformFixesTask fixesTask =
+                    CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Fixes", descriptions,
+                            null, false);
+
+            String myText = "TODO";
+
+            if (!fixesTask.isApplicableFixFound()) {
+                HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode\n User interaction is required for each problem found");
+            }
+        }
 	}
 
 	@Override
@@ -71,6 +129,24 @@ public class ConvertJavaToGroovy extends AnAction {
 				System.out.println(element.toString());
 			}
 		});
+
+		PsiClass psiClass = getPsiClass(psiFile);
+
+		PsiMethod methodFromText = JavaPsiFacade.getElementFactory(event.getProject()).createMethodFromText("void method() ...", psiClass);
+		PsiElement addedMethod = psiClass.add(methodFromText);
+		JavaCodeStyleManager.getInstance(event.getProject()).shortenClassReferences(addedMethod);
+	}
+
+	private PsiClass getPsiClass(PsiFile psiFile) {
+		if (psiFile instanceof PsiJavaFile) {
+			PsiJavaFile psiJavaFile = (PsiJavaFile) psiFile;
+			PsiClass[] psiClasses = psiJavaFile.getClasses();
+			if (psiClasses.length == 1) {
+				PsiClass psiClass = psiClasses[0];
+				return psiClass;
+			}
+		}
+		return null;
 	}
 
 	private void rename(VirtualFile currentFile, VirtualFile grovoySourceRoot) {
@@ -90,7 +166,7 @@ public class ConvertJavaToGroovy extends AnAction {
 		}
 	}
 
-	private VirtualFile createGrovoySourceRoot(Project project, VirtualFile currentFile) {
+	private VirtualFile createGroovySourceRoot(Project project, VirtualFile currentFile) {
 		VirtualFile[] sourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
 		Optional<VirtualFile> sourceRootForCurrentFile =
 				Arrays.stream(sourceRoots).filter(sourceRoot -> currentFile.getPath().startsWith(sourceRoot.getPath())).findAny();

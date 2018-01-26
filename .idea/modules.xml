@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/javaToGroovy.iml" filepath="$PROJECT_DIR$/javaToGroovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/groovyfier.iml" filepath="$PROJECT_DIR$/groovyfier.iml" />
     </modules>
   </component>
 </project>
