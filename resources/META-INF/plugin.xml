@@ -1,5 +1,5 @@
 <idea-plugin>
-  <id>com.github.masooh.intellij.plugin.javaToGroovy</id>
+  <id>com.github.masooh.intellij.plugin.groovyfier</id>
   <name>Java To Groovy</name>
   <version>0.1</version>
 
@@ -16,10 +16,11 @@
   <idea-version since-build="173.4301.25"/>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-       on how to target different products -->
+       on how to target different products -->¶
   <!-- uncomment to enable plugin in all products
   -->
   <depends>com.intellij.modules.java</depends>
+  <depends>org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
@@ -27,7 +28,7 @@
 
   <actions>
     <!-- Add your actions here -->
-    <action id="JavaToGroovy.Convert" class="com.github.masooh.intellij.plugin.javaToGroovy.ConvertJavaToGroovy"
+    <action id="JavaToGroovy.Convert" class="com.github.masooh.intellij.plugin.groovyfier.ConvertJavaToGroovy"
             text="Convert Java To Groovy"
             description="Converts the current Java file to Groovy">
       <add-to-group group-id="CodeMenu" anchor="last"/>
