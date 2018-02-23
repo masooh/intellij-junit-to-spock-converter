@@ -3,19 +3,24 @@ package com.github.masooh.intellij.plugin.groovyfier;
 import java.io.IOException;
 import java.util.*;
 
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author masooh
@@ -27,14 +32,12 @@ public class ConvertJavaToGroovy extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent event) {
         Project project = event.getProject();
-//		VirtualFile currentFile = event.getData(PlatformDataKeys.VIRTUAL_FILE);
-//		VirtualFile grovoySourceRoot = createGrovoySourceRoot(project, currentFile);
-//
+        VirtualFile currentFile = event.getData(PlatformDataKeys.VIRTUAL_FILE);
+        VirtualFile groovySourceRoot = createGroovySourceRoot(project, currentFile);
+
 //		ActionUtil.performActionDumbAware(new MoveAction(), event);
 //
-//		rename(currentFile, grovoySourceRoot);
-
-//		applyGroovyStyle(event);
+        renameAndMoveToGroovy(currentFile, groovySourceRoot, project);
 
 //		Object navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
 //		if (navigatable != null) {
@@ -46,14 +49,14 @@ public class ConvertJavaToGroovy extends AnAction {
 
     @Override
     public void update(AnActionEvent event) {
-        PsiFile file = event.getRequiredData(PlatformDataKeys.PSI_FILE);
-        Editor editor = event.getRequiredData(PlatformDataKeys.EDITOR);
-        FileType fileType = file.getFileType();
+        PsiFile file = event.getData(PlatformDataKeys.PSI_FILE);
+        Editor editor = event.getData(PlatformDataKeys.EDITOR);
 
-        boolean enabled = file != null && editor != null &&
-                Arrays.asList(GroovyFileType.getGroovyEnabledFileTypes()).contains(fileType);
+        boolean enabled = file != null &&
+                editor != null &&
+                JavaFileType.INSTANCE.equals(file.getFileType());
 
-		event.getPresentation().setEnabled(enabled);
+        event.getPresentation().setEnabled(enabled);
     }
 
     private PsiClass getPsiClass(PsiFile psiFile) {
@@ -68,16 +71,26 @@ public class ConvertJavaToGroovy extends AnAction {
         return null;
     }
 
-    private void rename(VirtualFile currentFile, VirtualFile grovoySourceRoot) {
-        // TODO exception werfen in Methode, ? welche und wo fangen
-        if (grovoySourceRoot == null || !grovoySourceRoot.exists()) {
-            return;
-        }
+    private void renameAndMoveToGroovy(VirtualFile currentFile, VirtualFile groovySourcesRoot, Project project) {
+        assert groovySourcesRoot != null;
+        assert groovySourcesRoot.exists();
+
+        Optional<VirtualFile> sourceRootForCurrentFile = getSourceRootForCurrentFile(project, currentFile);
+
+        assert sourceRootForCurrentFile.isPresent();
+
+        String relativePathForPackageName = VfsUtilCore.getRelativePath(currentFile.getParent(), sourceRootForCurrentFile.get(), '.');
 
         try {
             WriteAction.run(() -> {
-                        String newName = currentFile.getName().replace(".java", ".groovy");
-                        currentFile.rename(this, newName);
+                        String groovyFilename = currentFile.getName().replace(".java", ".groovy");
+                        currentFile.rename(this, groovyFilename);
+                        VirtualFile lastCreatedDir = groovySourcesRoot;
+
+                        for (String packageElement : relativePathForPackageName.split("\\.")) {
+                            lastCreatedDir = lastCreatedDir.createChildDirectory(this, packageElement);
+                        }
+                        currentFile.move(this, lastCreatedDir);
                     }
             );
         } catch (IOException e) {
@@ -86,29 +99,51 @@ public class ConvertJavaToGroovy extends AnAction {
     }
 
     private VirtualFile createGroovySourceRoot(Project project, VirtualFile currentFile) {
-        VirtualFile[] sourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-        Optional<VirtualFile> sourceRootForCurrentFile =
-                Arrays.stream(sourceRoots).filter(sourceRoot -> currentFile.getPath().startsWith(sourceRoot.getPath())).findAny();
+        Optional<VirtualFile> sourceRootForCurrentFile = getSourceRootForCurrentFile(project, currentFile);
         if (sourceRootForCurrentFile.isPresent()) {
             VirtualFile file = sourceRootForCurrentFile.get();
             VirtualFile sourceDirectory = file.getParent();
+
             VirtualFile groovyRoot = sourceDirectory.findChild("groovy");
-            if (groovyRoot == null || !groovyRoot.exists()) {
-                int yesNo = Messages.showYesNoCancelDialog(project, "groovy source root is not present, do you want to create it?", "JavaToGroovy", Messages.getQuestionIcon());
-                if (yesNo == Messages.NO) {
-                    return file;
-                }
-                try {
-                    WriteAction.run(() -> sourceDirectory.createChildDirectory(this, "groovy"));
-                } catch (IOException e) {
-                    String message = "Error while creating groovy directory";
-                    Messages.showErrorDialog(e.getMessage(), message);
-                    LOG.error(message, e);
-                }
+            if (groovyRoot != null && groovyRoot.exists()) {
+                return groovyRoot;
             }
-            groovyRoot.refresh(false, false);
-            return groovyRoot;
+
+            int yesNo = Messages.showYesNoCancelDialog(project, "Groovy source root is not present, do you want to create it?", "Groovyfier", Messages.getQuestionIcon());
+            if (yesNo == Messages.NO) {
+                return file;
+            }
+            try {
+                WriteAction.run(() -> sourceDirectory.createChildDirectory(this, "groovy"));
+            } catch (IOException e) {
+                String message = "Error while creating groovy directory";
+                Messages.showErrorDialog(e.getMessage(), message);
+                LOG.error(message, e);
+            }
+
+            final VirtualFile createdGroovyRoot = sourceDirectory.findChild("groovy");
+            Module module = getCurrentModule(project);
+            ModuleRootModificationUtil.updateModel(module, modifiableRootModel -> {
+                ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
+                assert contentEntries.length == 1; // I'm not sure what's the use case for several content entries
+                contentEntries[0].addSourceFolder(createdGroovyRoot, true);
+            });
+            createdGroovyRoot.refresh(false, true);
+            return createdGroovyRoot;
+        } else {
+            // TODO exception handling
         }
         return null;
+    }
+
+    private Module getCurrentModule(Project project) {
+        // FIXME determine correct module
+        return ModuleManager.getInstance(project).getModules()[0];
+    }
+
+    private Optional<VirtualFile> getSourceRootForCurrentFile(Project project, VirtualFile currentFile) {
+        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+        VirtualFile[] sourceRoots = projectRootManager.getContentSourceRoots();
+        return Arrays.stream(sourceRoots).filter(sourceRoot -> VfsUtilCore.isAncestor(sourceRoot, currentFile, true)).findAny();
     }
 }

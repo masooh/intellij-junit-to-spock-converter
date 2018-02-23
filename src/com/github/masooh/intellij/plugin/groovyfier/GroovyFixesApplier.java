@@ -24,9 +24,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GroovyFixesApplier {
-    public GroovyFixesApplier() {
-    }
-
     void applyGroovyFixes(AnActionEvent event, Project project) {
         PsiFile file = event.getRequiredData(PlatformDataKeys.PSI_FILE);
         Editor editor = event.getRequiredData(PlatformDataKeys.EDITOR);
