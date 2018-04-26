@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author masooh
@@ -33,18 +34,27 @@ public class ConvertJavaToGroovy extends AnAction {
     public void actionPerformed(AnActionEvent event) {
         Project project = event.getProject();
         VirtualFile currentFile = event.getData(PlatformDataKeys.VIRTUAL_FILE);
-        VirtualFile groovySourceRoot = createGroovySourceRoot(project, currentFile);
 
-//		ActionUtil.performActionDumbAware(new MoveAction(), event);
-//
-        renameAndMoveToGroovy(currentFile, groovySourceRoot, project);
+        if ("java".equals(currentFile.getExtension())) {
+            VirtualFile groovySourceRoot = createGroovySourceRoot(project, currentFile);
+
+            if (groovySourceRoot != null) {
+                renameAndMoveToGroovy(currentFile, groovySourceRoot, project);
+            }
+        }
+
+        if ("groovy".equals(currentFile.getExtension())) {
+            groovyFixesApplier.applyGroovyFixes(event, project);
+
+            //        getPsiClass(currentFile);
 
 //		Object navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
 //		if (navigatable != null) {
 //			Messages.showDialog(navigatable.toString(), "Selected Element:", new String[]{"OK"}, -1, null);
 //		}
+        }
 
-        groovyFixesApplier.applyGroovyFixes(event, project);
+
     }
 
     @Override
@@ -54,7 +64,10 @@ public class ConvertJavaToGroovy extends AnAction {
 
         boolean enabled = file != null &&
                 editor != null &&
-                JavaFileType.INSTANCE.equals(file.getFileType());
+                (
+                    JavaFileType.INSTANCE.equals(file.getFileType()) ||
+                    Arrays.asList(GroovyFileType.getGroovyEnabledFileTypes()).contains(file.getFileType())
+                );
 
         event.getPresentation().setEnabled(enabled);
     }
@@ -109,9 +122,9 @@ public class ConvertJavaToGroovy extends AnAction {
                 return groovyRoot;
             }
 
-            int yesNo = Messages.showYesNoCancelDialog(project, "Groovy source root is not present, do you want to create it?", "Groovyfier", Messages.getQuestionIcon());
+            int yesNo = Messages.showYesNoDialog(project, "Groovy source root is not present, do you want to create it?", "Groovyfier", Messages.getQuestionIcon());
             if (yesNo == Messages.NO) {
-                return file;
+                return null;
             }
             try {
                 WriteAction.run(() -> sourceDirectory.createChildDirectory(this, "groovy"));

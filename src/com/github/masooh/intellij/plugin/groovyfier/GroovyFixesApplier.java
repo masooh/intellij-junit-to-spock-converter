@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,38 +29,52 @@ public class GroovyFixesApplier {
         PsiFile file = event.getRequiredData(PlatformDataKeys.PSI_FILE);
         Editor editor = event.getRequiredData(PlatformDataKeys.EDITOR);
 
-        final List<InspectionToolWrapper> inspectionToolWrappers = InspectionToolRegistrar.getInstance().get();
+        final List<LocalInspectionToolWrapper> groovyInspections = findGroovyInspections();
 
-        final List<LocalInspectionToolWrapper> wrapperList = inspectionToolWrappers.stream()
-                .filter(inspectionToolWrapper -> inspectionToolWrapper.getLanguage() != null && inspectionToolWrapper.getLanguage().equalsIgnoreCase("groovy"))
-                .filter(wrapper -> wrapper.getGroupDisplayName().equalsIgnoreCase("GPath") || wrapper.getGroupDisplayName().equalsIgnoreCase("Style"))
-                .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
-                .map(wrapper -> (LocalInspectionToolWrapper) wrapper)
-                .collect(Collectors.toList());
-
-
-        if (!wrapperList.isEmpty()) {
+        if (!groovyInspections.isEmpty()) {
             // inspired by CleanupInspectionIntention
-            final Map<String, List<ProblemDescriptor>> problemDescriptors = ProgressManager.getInstance().runProcess(() -> {
-                InspectionManager inspectionManager = InspectionManager.getInstance(project);
-                return InspectionEngine.inspectEx(wrapperList, file, inspectionManager, false, false, new EmptyProgressIndicator());
-            }, new EmptyProgressIndicator());
+            final List<ProblemDescriptor> problemDescriptors = inspectFileForProblems(project, file, groovyInspections);
 
-            final List<ProblemDescriptor> descriptions = new ArrayList<ProblemDescriptor>();
-            for (List<ProblemDescriptor> group : problemDescriptors.values()) {
-                descriptions.addAll(group);
+            if (problemDescriptors.isEmpty()) {
+                return;
             }
 
-            if (!descriptions.isEmpty() && !FileModificationService.getInstance().preparePsiElementForWrite(file))
+            if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) {
+                HintManager.getInstance().showErrorHint(editor, "Cannot write PSI element.");
                 return;
+            }
 
             AbstractPerformFixesTask fixesTask =
-                    CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Groovy Fixes", descriptions,
+                    CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Groovy Fixes", problemDescriptors,
                             null, false);
 
             if (!fixesTask.isApplicableFixFound()) {
                 HintManager.getInstance().showErrorHint(editor, "Unfortunately Groovy fixes are currently not available for batch mode\n User interaction is required for each problem found.");
             }
         }
+    }
+
+    @NotNull
+    private List<ProblemDescriptor> inspectFileForProblems(Project project, PsiFile file, List<LocalInspectionToolWrapper> groovyInspections) {
+        final Map<String, List<ProblemDescriptor>> problemDescriptors = ProgressManager.getInstance().runProcess(() -> {
+            InspectionManager inspectionManager = InspectionManager.getInstance(project);
+            return InspectionEngine.inspectEx(groovyInspections, file, inspectionManager, false, false, new EmptyProgressIndicator());
+        }, new EmptyProgressIndicator());
+
+        final List<ProblemDescriptor> descriptions = new ArrayList<>();
+        for (List<ProblemDescriptor> group : problemDescriptors.values()) {
+            descriptions.addAll(group);
+        }
+        return descriptions;
+    }
+
+    private List<LocalInspectionToolWrapper> findGroovyInspections() {
+        final List<InspectionToolWrapper> inspectionToolWrappers = InspectionToolRegistrar.getInstance().get();
+        return inspectionToolWrappers.stream()
+                .filter(inspectionToolWrapper -> inspectionToolWrapper.getLanguage() != null && inspectionToolWrapper.getLanguage().equalsIgnoreCase("groovy"))
+                .filter(wrapper -> wrapper.getGroupDisplayName().equalsIgnoreCase("GPath") || wrapper.getGroupDisplayName().equalsIgnoreCase("Style"))
+                .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
+                .map(wrapper -> (LocalInspectionToolWrapper) wrapper)
+                .collect(Collectors.toList());
     }
 }
