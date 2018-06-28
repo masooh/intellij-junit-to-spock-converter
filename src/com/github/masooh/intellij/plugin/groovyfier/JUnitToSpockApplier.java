@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -42,9 +43,7 @@ public class JUnitToSpockApplier {
 
         changeMethods(project, grTypeDefinition);
 
-        // TODO assertEquals -> ==
         // TODO features durchgehen: https://github.com/opaluchlukasz/junit2spock
-        // TODO über erstem assert kommt then:
 
         optimizeImports(project, psiFile, editor);
     }
@@ -64,59 +63,90 @@ public class JUnitToSpockApplier {
 
     private void changeMethods(Project project, GrTypeDefinition grTypeDefinition) {
         for (GrMethod grMethod : grTypeDefinition.getCodeMethods()) {
-            PsiAnnotation annotation = PsiImplUtil.getAnnotation(grMethod, "org.junit.Test");
-            if (annotation != null) {
-                WriteCommandAction.runWriteCommandAction(project, annotation::delete);
-            }
 
-            String spacedMethodName = camelToSpace(grMethod.getName());
+            changeMethodHavingAnnotation(project, grMethod, "org.junit.Test", () -> {
+                String spacedMethodName = camelToSpace(grMethod.getName());
 
-            WriteCommandAction.runWriteCommandAction(project, () -> {
-                GrMethod methodFromText = getFactory(project).createMethodFromText(
-                        "def \"" + spacedMethodName + "\"() {}"
-                );
+                changeMethodNameTo(project, grMethod, "\"" + spacedMethodName + "\"");
+                voidToDef(grMethod);
 
-                // change name
-                grMethod.getNameIdentifierGroovy().replace(methodFromText.getNameIdentifierGroovy());
-                // remove void
-                grMethod.getReturnTypeElementGroovy().delete();
-                // add def
-                grMethod.getModifierList().add(methodFromText.getModifierList().getModifiers()[0]);
+                changeMethodBody(project, grMethod);
             });
 
-            changeMethodBody(project, grMethod);
+            changeMethodHavingAnnotation(project, grMethod, "org.junit.Before", () -> {
+                changeMethodNameTo(project, grMethod, "setup");
+                voidToDef(grMethod);
+            });
 
-            System.out.println(grMethod.getBlock());
+            changeMethodHavingAnnotation(project, grMethod, "org.junit.After", () -> {
+                changeMethodNameTo(project, grMethod, "cleanup");
+                voidToDef(grMethod);
+            });
+
+            changeMethodHavingAnnotation(project, grMethod, "org.junit.BeforeClass", () -> {
+                changeMethodNameTo(project, grMethod, "setupSpec");
+                grMethod.getModifierList().setModifierProperty(GrModifier.STATIC, false);
+                voidToDef(grMethod);
+            });
+
+            changeMethodHavingAnnotation(project, grMethod, "org.junit.AfterClass", () -> {
+                changeMethodNameTo(project, grMethod, "cleanupSpec");
+                grMethod.getModifierList().setModifierProperty(GrModifier.STATIC, false);
+                voidToDef(grMethod);
+            });
         }
+    }
+
+    /**
+     * also removes the annotation
+     */
+    private void changeMethodHavingAnnotation(Project project, GrMethod grMethod, String annotationName,
+                                              Runnable changeInMethod) {
+
+        PsiAnnotation annotation = PsiImplUtil.getAnnotation(grMethod, annotationName);
+
+        if (annotation != null) {
+            WriteCommandAction.runWriteCommandAction(project, annotation::delete);
+            WriteCommandAction.runWriteCommandAction(project, changeInMethod);
+        }
+    }
+
+    private void changeMethodNameTo(Project project, GrMethod grMethod, String name) {
+        GrMethod methodFromText = getFactory(project).createMethodFromText("def " + name + "() {}");
+        // change name
+        grMethod.getNameIdentifierGroovy().replace(methodFromText.getNameIdentifierGroovy());
+    }
+
+    private void voidToDef(GrMethod grMethod) {
+        // remove void
+        grMethod.getReturnTypeElementGroovy().delete();
+
+        grMethod.getModifierList().setModifierProperty(GrModifier.DEF, true);
     }
 
     private void changeMethodBody(Project project, GrMethod grMethod) {
         GrStatement firstStatement = grMethod.getBlock().getStatements()[0];
         GrStatement firstChildWithWhen = getFactory(project).createStatementFromText("when: " + firstStatement.getText());
 
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-            replaceElement(firstStatement, firstChildWithWhen);
-        });
+        replaceElement(firstStatement, firstChildWithWhen);
 
         List<GrStatement> methodCalls = Arrays.stream(grMethod.getBlock().getStatements())
                 .filter(grStatement -> grStatement instanceof GrMethodCallExpression)
                 .collect(Collectors.toList());
 
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-            AtomicBoolean firstAssertion = new AtomicBoolean(true);
+        AtomicBoolean firstAssertion = new AtomicBoolean(true);
 
-            methodCalls.stream().filter(grStatement -> grStatement.getFirstChild().getText().equals("assertEquals")).forEach(grStatement -> {
-                GrArgumentList grArgumentList = (GrArgumentList) grStatement.getLastChild();
-                GroovyPsiElement[] allArguments = grArgumentList.getAllArguments();
-                String expected = allArguments[0].getText();
-                String actual = allArguments[1].getText();
-                String label = firstAssertion.get() ? "then: " : "";
+        methodCalls.stream().filter(grStatement -> grStatement.getFirstChild().getText().equals("assertEquals")).forEach(grStatement -> {
+            GrArgumentList grArgumentList = (GrArgumentList) grStatement.getLastChild();
+            GroovyPsiElement[] allArguments = grArgumentList.getAllArguments();
+            String expected = allArguments[0].getText();
+            String actual = allArguments[1].getText();
+            String label = firstAssertion.get() ? "then: " : "";
 
-                GrStatement assertion = getFactory(project).createStatementFromText(label + actual + " == " + expected);
-                firstAssertion.set(false);
+            GrStatement assertion = getFactory(project).createStatementFromText(label + actual + " == " + expected);
+            firstAssertion.set(false);
 
-                replaceElement(grStatement, assertion);
-            });
+            replaceElement(grStatement, assertion);
         });
     }
 
