@@ -60,8 +60,8 @@ public class ConvertJavaToGroovy extends AnAction {
         boolean enabled = file != null &&
                 editor != null &&
                 (
-                    JavaFileType.INSTANCE.equals(file.getFileType()) ||
-                    Arrays.asList(GroovyFileType.getGroovyEnabledFileTypes()).contains(file.getFileType())
+                        JavaFileType.INSTANCE.equals(file.getFileType()) ||
+                                Arrays.asList(GroovyFileType.getGroovyEnabledFileTypes()).contains(file.getFileType())
                 );
 
         event.getPresentation().setEnabled(enabled);
@@ -84,7 +84,7 @@ public class ConvertJavaToGroovy extends AnAction {
                         VirtualFile lastCreatedDir = groovySourcesRoot;
 
                         for (String packageElement : relativePathForPackageName.split("\\.")) {
-                            lastCreatedDir = lastCreatedDir.createChildDirectory(this, packageElement);
+                            lastCreatedDir = lastCreatedDir.findOrCreateChildData(this, packageElement);
                         }
                         currentFile.move(this, lastCreatedDir);
                     }

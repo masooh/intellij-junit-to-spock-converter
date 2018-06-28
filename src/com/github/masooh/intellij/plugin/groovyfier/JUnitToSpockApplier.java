@@ -12,13 +12,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class JUnitToSpockApplier {
     private static final Logger LOG = Logger.getInstance(JUnitToSpockApplier.class);
@@ -75,7 +83,46 @@ public class JUnitToSpockApplier {
                 // add def
                 grMethod.getModifierList().add(methodFromText.getModifierList().getModifiers()[0]);
             });
+
+            changeMethodBody(project, grMethod);
+
+            System.out.println(grMethod.getBlock());
         }
+    }
+
+    private void changeMethodBody(Project project, GrMethod grMethod) {
+        GrStatement firstStatement = grMethod.getBlock().getStatements()[0];
+        GrStatement firstChildWithWhen = getFactory(project).createStatementFromText("when: " + firstStatement.getText());
+
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+            replaceElement(firstStatement, firstChildWithWhen);
+        });
+
+        List<GrStatement> methodCalls = Arrays.stream(grMethod.getBlock().getStatements())
+                .filter(grStatement -> grStatement instanceof GrMethodCallExpression)
+                .collect(Collectors.toList());
+
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+            AtomicBoolean firstAssertion = new AtomicBoolean(true);
+
+            methodCalls.stream().filter(grStatement -> grStatement.getFirstChild().getText().equals("assertEquals")).forEach(grStatement -> {
+                GrArgumentList grArgumentList = (GrArgumentList) grStatement.getLastChild();
+                GroovyPsiElement[] allArguments = grArgumentList.getAllArguments();
+                String expected = allArguments[0].getText();
+                String actual = allArguments[1].getText();
+                String label = firstAssertion.get() ? "then: " : "";
+
+                GrStatement assertion = getFactory(project).createStatementFromText(label + actual + " == " + expected);
+                firstAssertion.set(false);
+
+                replaceElement(grStatement, assertion);
+            });
+        });
+    }
+
+    private void replaceElement(PsiElement current, PsiElement replacement) {
+        current.getParent().addAfter(replacement, current);
+        current.delete();
     }
 
     /**
