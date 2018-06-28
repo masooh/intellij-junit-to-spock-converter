@@ -1,10 +1,6 @@
 package com.github.masooh.intellij.plugin.groovyfier;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -20,8 +16,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * @author masooh
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 public class ConvertJavaToGroovy extends AnAction {
     private static final Logger LOG = Logger.getInstance(ConvertJavaToGroovy.class);
     private final GroovyFixesApplier groovyFixesApplier = new GroovyFixesApplier();
+    private final JUnitToSpockApplier jUnitToSpockApplier = new JUnitToSpockApplier();
 
     @Override
     public void actionPerformed(AnActionEvent event) {
@@ -44,16 +45,10 @@ public class ConvertJavaToGroovy extends AnAction {
         }
 
         if ("groovy".equals(currentFile.getExtension())) {
-            groovyFixesApplier.applyGroovyFixes(event, project);
+            groovyFixesApplier.applyGroovyFixes(event);
 
-            //        getPsiClass(currentFile);
-
-//		Object navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
-//		if (navigatable != null) {
-//			Messages.showDialog(navigatable.toString(), "Selected Element:", new String[]{"OK"}, -1, null);
-//		}
+            jUnitToSpockApplier.transformToSpock(event);
         }
-
 
     }
 
@@ -70,18 +65,6 @@ public class ConvertJavaToGroovy extends AnAction {
                 );
 
         event.getPresentation().setEnabled(enabled);
-    }
-
-    private PsiClass getPsiClass(PsiFile psiFile) {
-        if (psiFile instanceof PsiJavaFile) {
-            PsiJavaFile psiJavaFile = (PsiJavaFile) psiFile;
-            PsiClass[] psiClasses = psiJavaFile.getClasses();
-            if (psiClasses.length == 1) {
-                PsiClass psiClass = psiClasses[0];
-                return psiClass;
-            }
-        }
-        return null;
     }
 
     private void renameAndMoveToGroovy(VirtualFile currentFile, VirtualFile groovySourcesRoot, Project project) {

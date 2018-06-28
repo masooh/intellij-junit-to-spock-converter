@@ -16,8 +16,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GroovyFixesApplier {
-    void applyGroovyFixes(AnActionEvent event, Project project) {
+    void applyGroovyFixes(AnActionEvent event) {
+        Project project = event.getProject();
         PsiFile file = event.getRequiredData(PlatformDataKeys.PSI_FILE);
         Editor editor = event.getRequiredData(PlatformDataKeys.EDITOR);
 
