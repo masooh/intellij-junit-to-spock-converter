@@ -131,7 +131,11 @@ public class JUnitToSpockApplier {
         methodCalls.stream()
                 .filter(grStatement -> grStatement instanceof GrMethodCallExpression)
                 .map(grStatement -> (GrMethodCallExpression)grStatement)
-                .filter(methodCallExpression -> methodCallExpression.getFirstChild().getText().startsWith("assert")).forEach(methodCall -> {
+                .filter(methodCallExpression -> {
+                    String text = methodCallExpression.getFirstChild().getText();
+                    // with or without import
+                    return text.startsWith("assert") || text.startsWith("Assert.");
+                }).forEach(methodCall -> {
             GrExpression spockAssert = getSpockAssert(methodCall);
 
             if (firstAssertion.getAndSet(false)) {
@@ -153,7 +157,8 @@ public class JUnitToSpockApplier {
 
         GrExpression spockAssert;
 
-        String methodName = methodCallExpression.getFirstChild().getText();
+        // remove Assert class if there
+        String methodName = methodCallExpression.getFirstChild().getText().replace("Assert.", "");
         switch (methodName) {
             case "assertEquals":
                 GrBinaryExpression equalsExpression = createExpression("actual == expected");
