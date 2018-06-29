@@ -16,10 +16,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +74,7 @@ public class GroovyFixesApplier {
         return inspectionToolWrappers.stream()
                 .filter(inspectionToolWrapper -> inspectionToolWrapper.getLanguage() != null && inspectionToolWrapper.getLanguage().equalsIgnoreCase("groovy"))
                 .filter(wrapper -> wrapper.getGroupDisplayName().equalsIgnoreCase("GPath") || wrapper.getGroupDisplayName().equalsIgnoreCase("Style"))
+                .filter(wrapper -> !wrapper.getID().equals("ChangeToMethod")) // this is not groovy style
                 .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
                 .map(wrapper -> (LocalInspectionToolWrapper) wrapper)
                 .collect(Collectors.toList());

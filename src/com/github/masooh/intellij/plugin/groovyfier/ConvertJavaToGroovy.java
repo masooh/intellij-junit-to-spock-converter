@@ -29,7 +29,6 @@ import java.util.Optional;
 public class ConvertJavaToGroovy extends AnAction {
     private static final Logger LOG = Logger.getInstance(ConvertJavaToGroovy.class);
     private final GroovyFixesApplier groovyFixesApplier = new GroovyFixesApplier();
-    private final JUnitToSpockApplier jUnitToSpockApplier = new JUnitToSpockApplier();
 
     @Override
     public void actionPerformed(AnActionEvent event) {
@@ -46,8 +45,7 @@ public class ConvertJavaToGroovy extends AnAction {
 
         if ("groovy".equals(currentFile.getExtension())) {
             groovyFixesApplier.applyGroovyFixes(event);
-
-            jUnitToSpockApplier.transformToSpock(event);
+            new JUnitToSpockApplier(event).transformToSpock();
         }
 
     }
@@ -84,7 +82,12 @@ public class ConvertJavaToGroovy extends AnAction {
                         VirtualFile lastCreatedDir = groovySourcesRoot;
 
                         for (String packageElement : relativePathForPackageName.split("\\.")) {
-                            lastCreatedDir = lastCreatedDir.findOrCreateChildData(this, packageElement);
+                            VirtualFile childWithPackageName = lastCreatedDir.findChild(packageElement);
+                            if (childWithPackageName != null && childWithPackageName.isDirectory()) {
+                                lastCreatedDir = childWithPackageName;
+                            } else {
+                                lastCreatedDir = lastCreatedDir.createChildDirectory(this, packageElement);
+                            }
                         }
                         currentFile.move(this, lastCreatedDir);
                     }

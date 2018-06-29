@@ -12,11 +12,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -29,81 +30,85 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.github.masooh.intellij.plugin.groovyfier.PsiHelper.*;
+
 public class JUnitToSpockApplier {
     private static final Logger LOG = Logger.getInstance(JUnitToSpockApplier.class);
+    private final Project project;
+    private final PsiFile psiFile;
+    private final Editor editor;
+    private final GrTypeDefinition typeDefinition;
 
-    void transformToSpock(AnActionEvent event) {
-        Project project = event.getProject();
-        PsiFile psiFile = event.getRequiredData(PlatformDataKeys.PSI_FILE);
-        Editor editor = event.getRequiredData(PlatformDataKeys.EDITOR);
-
-        GrTypeDefinition grTypeDefinition = (GrTypeDefinition) getPsiClass(psiFile);
-
-        extendSpecification(project, psiFile, grTypeDefinition);
-
-        changeMethods(project, grTypeDefinition);
-
-        // TODO features durchgehen: https://github.com/opaluchlukasz/junit2spock
-
-        optimizeImports(project, psiFile, editor);
+    public JUnitToSpockApplier(AnActionEvent event) {
+        project = event.getProject();
+        psiFile = event.getRequiredData(PlatformDataKeys.PSI_FILE);
+        editor = event.getRequiredData(PlatformDataKeys.EDITOR);
+        typeDefinition = (GrTypeDefinition) getPsiClass(psiFile);
     }
 
-    private void optimizeImports(Project project, PsiFile psiFile, Editor editor) {
+    void transformToSpock() {
+        extendSpecification();
+        changeMethods();
+
+        // TODO features durchgehen: https://github.com/opaluchlukasz/junit2spock
+        // TODO Plugin/Feature fähig machen, wie bei junit2spock
+
+        optimizeImports();
+    }
+
+    private void optimizeImports() {
         /* führt optimize nicht durch. Ursache unklar
             WriteCommandAction.runWriteCommandAction(project, () ->
                 JavaCodeStyleManager.getInstance(project).optimizeImports(psiFile));
         */
 
-        // ask unklar was onTheFly ist
+        // TODO unklar was onTheFly ist
         IntentionAction fix = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false);
         if (fix.isAvailable(project, editor, psiFile) && psiFile.isWritable()) {
             fix.invoke(project, editor, psiFile);
         }
     }
 
-    private void changeMethods(Project project, GrTypeDefinition grTypeDefinition) {
-        for (GrMethod grMethod : grTypeDefinition.getCodeMethods()) {
+    private void changeMethods() {
+        for (GrMethod method : typeDefinition.getCodeMethods()) {
 
-            changeMethodHavingAnnotation(project, grMethod, "org.junit.Test", () -> {
-                String spacedMethodName = camelToSpace(grMethod.getName());
-
-                changeMethodNameTo(project, grMethod, "\"" + spacedMethodName + "\"");
-                voidToDef(grMethod);
-
-                changeMethodBody(project, grMethod);
+            changeMethodHavingAnnotation(method, "org.junit.Test", () -> {
+                changeMethodNameTo(method, "\"" + camelToSpace(method.getName()) + "\"");
+                voidReturnToDef(method);
+                changeMethodBody(method);
             });
 
-            changeMethodHavingAnnotation(project, grMethod, "org.junit.Before", () -> {
-                changeMethodNameTo(project, grMethod, "setup");
-                voidToDef(grMethod);
+            changeMethodHavingAnnotation(method, "org.junit.Before", () -> {
+                changeMethodNameTo(method, "setup");
+                voidReturnToDef(method);
             });
 
-            changeMethodHavingAnnotation(project, grMethod, "org.junit.After", () -> {
-                changeMethodNameTo(project, grMethod, "cleanup");
-                voidToDef(grMethod);
+            changeMethodHavingAnnotation(method, "org.junit.After", () -> {
+                changeMethodNameTo(method, "cleanup");
+                voidReturnToDef(method);
             });
 
-            changeMethodHavingAnnotation(project, grMethod, "org.junit.BeforeClass", () -> {
-                changeMethodNameTo(project, grMethod, "setupSpec");
-                grMethod.getModifierList().setModifierProperty(GrModifier.STATIC, false);
-                voidToDef(grMethod);
+            changeMethodHavingAnnotation(method, "org.junit.BeforeClass", () -> {
+                changeMethodNameTo(method, "setupSpec");
+                removeStaticModifier(method);
+                voidReturnToDef(method);
             });
 
-            changeMethodHavingAnnotation(project, grMethod, "org.junit.AfterClass", () -> {
-                changeMethodNameTo(project, grMethod, "cleanupSpec");
-                grMethod.getModifierList().setModifierProperty(GrModifier.STATIC, false);
-                voidToDef(grMethod);
+            changeMethodHavingAnnotation(method, "org.junit.AfterClass", () -> {
+                changeMethodNameTo(method, "cleanupSpec");
+                removeStaticModifier(method);
+                voidReturnToDef(method);
             });
         }
     }
 
     /**
-     * also removes the annotation
+     * also deletes the annotation
      */
-    private void changeMethodHavingAnnotation(Project project, GrMethod grMethod, String annotationName,
+    private void changeMethodHavingAnnotation(GrMethod method, String annotationName,
                                               Runnable changeInMethod) {
 
-        PsiAnnotation annotation = PsiImplUtil.getAnnotation(grMethod, annotationName);
+        PsiAnnotation annotation = PsiImplUtil.getAnnotation(method, annotationName);
 
         if (annotation != null) {
             WriteCommandAction.runWriteCommandAction(project, annotation::delete);
@@ -111,65 +116,105 @@ public class JUnitToSpockApplier {
         }
     }
 
-    private void changeMethodNameTo(Project project, GrMethod grMethod, String name) {
-        GrMethod methodFromText = getFactory(project).createMethodFromText("def " + name + "() {}");
-        // change name
-        grMethod.getNameIdentifierGroovy().replace(methodFromText.getNameIdentifierGroovy());
+    private void changeMethodBody(GrMethod method) {
+        addWhenToFirstStatement(method);
+        replaceAsserts(method);
     }
 
-    private void voidToDef(GrMethod grMethod) {
-        // remove void
-        grMethod.getReturnTypeElementGroovy().delete();
-
-        grMethod.getModifierList().setModifierProperty(GrModifier.DEF, true);
-    }
-
-    private void changeMethodBody(Project project, GrMethod grMethod) {
-        GrStatement firstStatement = grMethod.getBlock().getStatements()[0];
-        GrStatement firstChildWithWhen = getFactory(project).createStatementFromText("when: " + firstStatement.getText());
-
-        replaceElement(firstStatement, firstChildWithWhen);
-
-        List<GrStatement> methodCalls = Arrays.stream(grMethod.getBlock().getStatements())
+    private void replaceAsserts(GrMethod method) {
+        List<GrStatement> methodCalls = Arrays.stream(method.getBlock().getStatements())
                 .filter(grStatement -> grStatement instanceof GrMethodCallExpression)
                 .collect(Collectors.toList());
 
         AtomicBoolean firstAssertion = new AtomicBoolean(true);
 
-        methodCalls.stream().filter(grStatement -> grStatement.getFirstChild().getText().equals("assertEquals")).forEach(grStatement -> {
-            GrArgumentList grArgumentList = (GrArgumentList) grStatement.getLastChild();
-            GroovyPsiElement[] allArguments = grArgumentList.getAllArguments();
-            String expected = allArguments[0].getText();
-            String actual = allArguments[1].getText();
-            String label = firstAssertion.get() ? "then: " : "";
+        methodCalls.stream()
+                .filter(grStatement -> grStatement instanceof GrMethodCallExpression)
+                .map(grStatement -> (GrMethodCallExpression)grStatement)
+                .filter(methodCallExpression -> methodCallExpression.getFirstChild().getText().startsWith("assert")).forEach(methodCall -> {
+            GrExpression spockAssert = getSpockAssert(methodCall);
 
-            GrStatement assertion = getFactory(project).createStatementFromText(label + actual + " == " + expected);
-            firstAssertion.set(false);
-
-            replaceElement(grStatement, assertion);
+            if (firstAssertion.getAndSet(false)) {
+                GrStatement spockAssertWithLabel = getFactory().createStatementFromText("then: expression");
+                GrExpression grExpression = (GrExpression) spockAssertWithLabel.getLastChild();
+                grExpression.replaceWithExpression(spockAssert, true);
+                replaceElement(methodCall, spockAssertWithLabel);
+            } else {
+                replaceElement(methodCall, spockAssert);
+            }
         });
     }
 
-    private void replaceElement(PsiElement current, PsiElement replacement) {
-        current.getParent().addAfter(replacement, current);
-        current.delete();
+    private GrExpression getSpockAssert(GrMethodCallExpression methodCallExpression) {
+        GrExpression[] expressionArguments = methodCallExpression.getArgumentList().getExpressionArguments();
+
+        GrExpression firstArgument = expressionArguments[0];
+        GrExpression secondArgument = expressionArguments.length > 1 ? expressionArguments[1] : null;
+
+        GrExpression spockAssert;
+
+        String methodName = methodCallExpression.getFirstChild().getText();
+        switch (methodName) {
+            case "assertEquals":
+                GrBinaryExpression equalsExpression = createExpression("actual == expected");
+                equalsExpression.getLeftOperand().replaceWithExpression(secondArgument, true);
+                equalsExpression.getRightOperand().replaceWithExpression(firstArgument, true);
+                spockAssert = equalsExpression;
+                break;
+            case "assertTrue":
+                spockAssert = createExpression("actual").replaceWithExpression(firstArgument, true);
+                break;
+            case "assertFalse":
+                GrUnaryExpression unaryExpression = createExpression("!actual");
+                unaryExpression.getOperand().replaceWithExpression(firstArgument, true);
+                spockAssert = unaryExpression;
+                break;
+            case "assertNotNull":
+                GrBinaryExpression notNullExpression = createExpression("actual != null");
+                notNullExpression.getLeftOperand().replaceWithExpression(firstArgument, true);
+                spockAssert = notNullExpression;
+                break;
+            case "assertNull":
+                GrBinaryExpression nullExpression = createExpression("actual == null");
+                nullExpression.getLeftOperand().replaceWithExpression(firstArgument, true);
+                spockAssert = nullExpression;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown assert " + methodName);
+        }
+        return spockAssert;
+    }
+
+    private void addWhenToFirstStatement(GrMethod grMethod) {
+        GrStatement firstStatement = grMethod.getBlock().getStatements()[0];
+
+        GrLabeledStatement firstStatementWithWhen = createStatementFromText("when: expression");
+        firstStatementWithWhen.getStatement().replaceWithStatement(firstStatement);
+
+        replaceElement(firstStatement, firstStatementWithWhen);
+    }
+
+    @NotNull
+    private <T extends GrStatement> T createStatementFromText(String expression) {
+        return (T) getFactory().createStatementFromText(expression);
+    }
+
+    @NotNull
+    private <T extends GrExpression> T createExpression(String expression) {
+        return (T) getFactory().createExpressionFromText(expression);
     }
 
     /**
      * only insert extends if no extends are there
      */
-    private void extendSpecification(Project project, PsiFile psiFile, GrTypeDefinition grTypeDefinition) {
-        if (grTypeDefinition.getExtendsList().getTextLength() == 0) {
-
-            StringBuilder classText = new StringBuilder();
-            classText.append("class A extends spock.lang.Specification {}");
-
-            final GrTypeDefinition definition = getFactory(project).createTypeDefinition(classText.toString());
+    private void extendSpecification() {
+        if (typeDefinition.getExtendsList().getTextLength() == 0) {
+            GrTypeDefinition definition = getFactory().createTypeDefinition("class A extends spock.lang.Specification {}");
             GrExtendsClause extendsClause = definition.getExtendsClause();
 
             // ask welchen Effekt hat command und groupID?
             WriteCommandAction.runWriteCommandAction(project, null, null, () -> {
-                PsiElement addedExtend = grTypeDefinition.addAfter(extendsClause, grTypeDefinition.getNameIdentifierGroovy());
+                PsiElement addedExtend = typeDefinition.addAfter(extendsClause, typeDefinition.getNameIdentifierGroovy());
 
                 JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedExtend);
             }, psiFile);
@@ -177,7 +222,7 @@ public class JUnitToSpockApplier {
     }
 
     @NotNull
-    private GroovyPsiElementFactory getFactory(Project project) {
+    private GroovyPsiElementFactory getFactory() {
         return GroovyPsiElementFactory.getInstance(project);
     }
 
@@ -196,6 +241,6 @@ public class JUnitToSpockApplier {
     }
 
     private String camelToSpace(final String string) {
-        return StringUtil.join(GroovyNamesUtil.camelizeString(string), s -> StringUtil.decapitalize(s), " ");
+        return StringUtil.join(GroovyNamesUtil.camelizeString(string), StringUtil::decapitalize, " ");
     }
 }
