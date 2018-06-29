@@ -4,21 +4,21 @@
   <version>0.1</version>
 
   <description><![CDATA[
-      Convert a Java class to a Groovy class.<br>
+      Converts a Java class to a Groovy class.<br>
+      New action: Code -> Convert Java To Groovy.<br>
+      Focused on converting JUnit tests to Spock specs.
     ]]></description>
 
   <change-notes><![CDATA[
-      Initial commit supporting TODO
+    Initial version which can replace setup and tear down classes as well as asserts.
     ]]>
   </change-notes>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-  <idea-version since-build="173.4301.25"/>
+  <idea-version since-build="181"/>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
        on how to target different products -->¶
-  <!-- uncomment to enable plugin in all products
-  -->
   <depends>com.intellij.modules.java</depends>
   <depends>org.intellij.groovy</depends>
 
