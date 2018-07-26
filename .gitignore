@@ -1,3 +1,6 @@
 out
-.idea/workspace.xml
 *.jar
+.idea
+build
+*.ipr
+*.iml

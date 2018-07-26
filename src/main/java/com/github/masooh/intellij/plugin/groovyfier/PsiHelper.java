@@ -1,9 +1,10 @@
 package com.github.masooh.intellij.plugin.groovyfier;
 
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
+import com.intellij.psi.PsiElement;
 
 public class PsiHelper {
     static void voidReturnToDef(GrMethod method) {

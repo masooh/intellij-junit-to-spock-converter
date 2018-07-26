@@ -1,5 +1,12 @@
 package com.github.masooh.intellij.plugin.groovyfier;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.InspectionEngine;
@@ -17,12 +24,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class GroovyFixesApplier {
     void applyGroovyFixes(AnActionEvent event) {

@@ -1,0 +1,23 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id "org.jetbrains.intellij" version "0.3.5"
+}
+
+apply plugin: 'idea'
+apply plugin: 'org.jetbrains.intellij'
+apply plugin: 'java'
+
+intellij {
+    type 'IC'
+    version '2018.1' //IntelliJ IDEA 2016.3 dependency; for a full list of IntelliJ IDEA releases please see https://www.jetbrains.com/intellij-repository/releases
+    plugins 'coverage', 'Groovy' //Bundled plugin dependencies
+    pluginName 'Groovyfier'
+}
+
+group 'org.jetbrains'
+version '1.2' // Plugin version

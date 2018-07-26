@@ -1,15 +1,15 @@
 package com.github.masooh.intellij.plugin.groovyfier;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import static com.github.masooh.intellij.plugin.groovyfier.PsiHelper.changeMethodNameTo;
+import static com.github.masooh.intellij.plugin.groovyfier.PsiHelper.removeStaticModifier;
+import static com.github.masooh.intellij.plugin.groovyfier.PsiHelper.replaceElement;
+import static com.github.masooh.intellij.plugin.groovyfier.PsiHelper.voidReturnToDef;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -25,12 +25,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static com.github.masooh.intellij.plugin.groovyfier.PsiHelper.*;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 
 public class JUnitToSpockApplier {
     private static final Logger LOG = Logger.getInstance(JUnitToSpockApplier.class);
@@ -50,8 +58,16 @@ public class JUnitToSpockApplier {
         extendSpecification();
         changeMethods();
 
+        // TODO add spock to dependencies if not present
+        // TODO falls Test src/test/groovy anlegt bricht Umwandlung um: PSI and index do not match
+
         // TODO features durchgehen: https://github.com/opaluchlukasz/junit2spock
         // TODO Plugin/Feature fähig machen, wie bei junit2spock
+
+        /* TODO Wicket feature: tester.assertComponent(FILE_LIST_PATH, ListView.class) -> then: (nur tester.assertX)
+            nicht tester.lastRenderedPage.add(checkEventBehavior) oder tester.executeAjaxEvent(NEXT_STEP_LINK_PATH, "onclick")
+         */
+        // TODO first line then: -> expect:
 
         optimizeImports();
     }

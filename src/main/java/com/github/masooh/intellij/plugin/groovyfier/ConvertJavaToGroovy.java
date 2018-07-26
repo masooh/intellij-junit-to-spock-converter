@@ -1,5 +1,11 @@
 package com.github.masooh.intellij.plugin.groovyfier;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+
+import org.jetbrains.plugins.groovy.GroovyFileType;
+
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,11 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * @author masooh
@@ -45,6 +46,24 @@ public class ConvertJavaToGroovy extends AnAction {
 
         if ("groovy".equals(currentFile.getExtension())) {
             groovyFixesApplier.applyGroovyFixes(event);
+            // TODO 1 must have: @Fixture(modifications = { "xyz" }) -> []; Closable block (evtl. auch mit intention aus Groovy plugin array -> list
+
+            /* TODO Groovy array handling
+                List<IdentAttachmentMetaData> documents = new ArrayList<>()
+                documents.add(test)
+
+                -> List<IdentAttachmentMetaData> documents = [test]
+             */
+            /* TODO GString intent expression conversion
+                FILE_LIST_PATH + ":0:documentDownload" -> GString (
+             */
+
+            /* TODO unit tests für Plugin, wie geht das?
+                sonst zumindest Test-Datei hinterlegen, die funktioniert (BookTest)
+             */
+            /* TODO
+                Plugin Beschreibung mit Mini-Video (GIF) o.ä., siehe IntelliJ new feature Videos
+             */
             new JUnitToSpockApplier(event).transformToSpock();
         }
 
