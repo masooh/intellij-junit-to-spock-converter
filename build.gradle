@@ -1,6 +1,11 @@
 buildscript {
+    ext.kotlin_version ='1.2.51'
+
     repositories {
         mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -11,6 +16,7 @@ plugins {
 apply plugin: 'idea'
 apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
+apply plugin: 'kotlin'
 
 intellij {
     type 'IC'

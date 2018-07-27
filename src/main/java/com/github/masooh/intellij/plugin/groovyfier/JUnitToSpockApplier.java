@@ -34,10 +34,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 
 public class JUnitToSpockApplier {
@@ -51,7 +50,7 @@ public class JUnitToSpockApplier {
         project = event.getProject();
         psiFile = event.getRequiredData(PlatformDataKeys.PSI_FILE);
         editor = event.getRequiredData(PlatformDataKeys.EDITOR);
-        typeDefinition = (GrTypeDefinition) getPsiClass(psiFile);
+        typeDefinition = (GrTypeDefinition) PsiHelper.getPsiClass(psiFile);
     }
 
     void transformToSpock() {
@@ -94,6 +93,7 @@ public class JUnitToSpockApplier {
                 changeMethodBody(method);
             });
 
+            // TODO handle JUnit 5 annotations
             changeMethodHavingAnnotation(method, "org.junit.Before", () -> {
                 changeMethodNameTo(method, "setup");
                 voidReturnToDef(method);
@@ -127,6 +127,18 @@ public class JUnitToSpockApplier {
         PsiAnnotation annotation = PsiImplUtil.getAnnotation(method, annotationName);
 
         if (annotation != null) {
+            Object exceptionClass = null;
+            for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
+                switch (attribute.getName()) {
+                    case "expected":
+                        exceptionClass = attribute.getValue();
+                        break;
+                    // TODO timeout
+                    default:
+                        LOG.error("unhandled attribute: {}", attribute.getName());
+                }
+            }
+
             WriteCommandAction.runWriteCommandAction(project, annotation::delete);
             WriteCommandAction.runWriteCommandAction(project, changeInMethod);
         }
@@ -247,19 +259,6 @@ public class JUnitToSpockApplier {
         return GroovyPsiElementFactory.getInstance(project);
     }
 
-    private PsiClass getPsiClass(PsiFile psiFile) {
-        if (psiFile instanceof PsiClassOwner) {
-            PsiClassOwner psiClassOwner = (PsiClassOwner) psiFile;
-            PsiClass[] psiClasses = psiClassOwner.getClasses();
-            if (psiClasses.length == 1) {
-                PsiClass psiClass = psiClasses[0];
-                return psiClass;
-            } else {
-                LOG.error("More or less that one PSI class. Found: " + psiClasses.length);
-            }
-        }
-        return null;
-    }
 
     private String camelToSpace(final String string) {
         return StringUtil.join(GroovyNamesUtil.camelizeString(string), StringUtil::decapitalize, " ");
