@@ -1,6 +1,5 @@
 package com.github.masooh.intellij.plugin.groovyfier
 
-import com.github.masooh.intellij.plugin.groovyfier.PsiHelper.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -36,7 +35,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         get() = GroovyPsiElementFactory.getInstance(project)
 
     init {
-        typeDefinition = PsiHelper.getPsiClass(psiFile) as GrTypeDefinition
+        typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
     }
 
     fun transformToSpock() {
@@ -84,8 +83,8 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 }
 
                 Runnable {
-                    changeMethodNameTo(method, "\"" + camelToSpace(method.name) + "\"")
-                    voidReturnToDef(method)
+                    method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
+                    method.voidReturnToDef()
                     changeMethodBody(method)
 
                     if (exceptionClass != null) {
@@ -101,32 +100,32 @@ class JUnitToSpockApplier(event: AnActionEvent) {
             // TODO handle JUnit 5 annotations
             changeMethodHavingAnnotation(method, "org.junit.Before") {
                 Runnable {
-                    changeMethodNameTo(method, "setup")
-                    voidReturnToDef(method)
+                    method.changeMethodNameTo("setup")
+                    method.voidReturnToDef()
                 }
             }
 
             changeMethodHavingAnnotation(method, "org.junit.After") {
                 Runnable {
-                    changeMethodNameTo(method, "cleanup")
-                    voidReturnToDef(method)
+                    method.changeMethodNameTo("cleanup")
+                    method.voidReturnToDef()
                 }
             }
 
             changeMethodHavingAnnotation(method, "org.junit.BeforeClass") {
                 Runnable {
-                    changeMethodNameTo(method, "setupSpec")
-                    removeStaticModifier(method)
-                    voidReturnToDef(method)
+                    method.changeMethodNameTo("setupSpec")
+                    method.removeStaticModifier()
+                    method.voidReturnToDef()
                 }
 
             }
 
             changeMethodHavingAnnotation(method, "org.junit.AfterClass") {
                 Runnable {
-                    changeMethodNameTo(method, "cleanupSpec")
-                    removeStaticModifier(method)
-                    voidReturnToDef(method)
+                    method.changeMethodNameTo("cleanupSpec")
+                    method.removeStaticModifier()
+                    method.voidReturnToDef()
                 }
             }
         }
@@ -161,6 +160,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 .filter { methodCallExpression ->
                     val text = methodCallExpression.firstChild.text
                     // with or without import
+                    methodCallExpression.
                     text.startsWith("assert") || text.startsWith("Assert.")
                 }.forEach { methodCall ->
                     val spockAssert = getSpockAssert(methodCall)
@@ -169,9 +169,9 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                         val spockAssertWithLabel = factory.createStatementFromText("then: expression")
                         val grExpression = spockAssertWithLabel.lastChild as GrExpression
                         grExpression.replaceWithExpression(spockAssert, true)
-                        replaceElement(methodCall, spockAssertWithLabel)
+                        methodCall.replaceElement(spockAssertWithLabel)
                     } else {
-                        replaceElement(methodCall, spockAssert)
+                        methodCall.replaceElement(spockAssert)
                     }
                 }
     }
@@ -220,7 +220,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         val firstStatementWithWhen = createStatementFromText<GrLabeledStatement>("when: expression")
         firstStatementWithWhen.statement!!.replaceWithStatement(firstStatement)
 
-        replaceElement(firstStatement, firstStatementWithWhen)
+        firstStatement.replaceElement(firstStatementWithWhen)
     }
 
     @Suppress("UNCHECKED_CAST")

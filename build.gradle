@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version ='1.2.51'
+    ext.kotlin_version ='1.2.71'
 
     repositories {
         mavenCentral()
@@ -16,7 +16,6 @@ plugins {
 
 apply plugin: 'idea'
 apply plugin: 'org.jetbrains.intellij'
-apply plugin: 'java'
 apply plugin: 'kotlin'
 
 intellij {
