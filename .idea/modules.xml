@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/javaToGroovy.iml" filepath="$PROJECT_DIR$/javaToGroovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/groovyfier.iml" filepath="$PROJECT_DIR$/groovyfier.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/groovyfier_main.iml" filepath="$PROJECT_DIR$/.idea/modules/groovyfier_main.iml" group="groovyfier" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/groovyfier_test.iml" filepath="$PROJECT_DIR$/.idea/modules/groovyfier_test.iml" group="groovyfier" />
     </modules>
   </component>
 </project>

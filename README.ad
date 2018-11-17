@@ -1,0 +1,8 @@
+# TODO
+
+- unit tests für Plugin, wie geht das?
+- Plugin Beschreibung mit Mini-Video (GIF) o.ä., siehe IntelliJ new feature Videos
+- Aufteilung in 3 Actions beenden
+** Java - > Groovy
+** Groovy Style
+** JUnit -> Spock
