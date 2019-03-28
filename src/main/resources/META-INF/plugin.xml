@@ -8,6 +8,7 @@
       New action: Code -> Convert Java To Groovy.<br>
       Focused on converting JUnit tests to Spock specs.
     ]]></description>
+  <vendor url="https://github.com/masooh">masooh</vendor>
 
   <change-notes><![CDATA[
     Initial version which can replace setup and tear down classes as well as asserts.

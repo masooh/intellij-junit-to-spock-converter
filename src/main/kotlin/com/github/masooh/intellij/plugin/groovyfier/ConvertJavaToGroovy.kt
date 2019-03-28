@@ -1,13 +1,5 @@
 package com.github.masooh.intellij.plugin.groovyfier
 
-import java.io.IOException
-import java.util.Arrays
-import java.util.Optional
-
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,6 +16,10 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import java.io.IOException
+import java.util.*
 
 /**
  * @author masooh
@@ -121,10 +117,10 @@ class ConvertJavaToGroovy : AnAction() {
 
                 for (packageElement in relativePathForPackageName!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
                     val childWithPackageName = lastCreatedDir.findChild(packageElement)
-                    if (childWithPackageName != null && childWithPackageName.isDirectory) {
-                        lastCreatedDir = childWithPackageName
+                    lastCreatedDir = if (childWithPackageName != null && childWithPackageName.isDirectory) {
+                        childWithPackageName
                     } else {
-                        lastCreatedDir = lastCreatedDir.createChildDirectory(this, packageElement)
+                        lastCreatedDir.createChildDirectory(this, packageElement)
                     }
                 }
                 currentFile.move(this, lastCreatedDir)

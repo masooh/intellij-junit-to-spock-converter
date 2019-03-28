@@ -193,7 +193,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 equalsExpression.rightOperand!!.replaceWithExpression(firstArgument, true)
                 spockAssert = equalsExpression
             }
-            "assertTrue" -> spockAssert = createExpression<GrExpression>("actual").replaceWithExpression(firstArgument, true)
+            "assertTrue" -> spockAssert = createExpression("actual").replaceWithExpression(firstArgument, true)
             "assertFalse" -> {
                 val unaryExpression = createExpression<GrUnaryExpression>("!actual")
                 unaryExpression.operand!!.replaceWithExpression(firstArgument, true)

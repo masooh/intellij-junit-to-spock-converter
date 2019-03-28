@@ -61,10 +61,12 @@ object GroovyFixesApplier {
     private fun findGroovyInspections(): List<LocalInspectionToolWrapper> {
         val inspectionToolWrappers = InspectionToolRegistrar.getInstance().get()
         return inspectionToolWrappers
+                .asSequence()
                 .filter { inspectionToolWrapper -> inspectionToolWrapper.language != null && inspectionToolWrapper.language!!.equals("groovy", ignoreCase = true) }
                 .filter { wrapper -> wrapper.groupDisplayName.equals("GPath", ignoreCase = true) || wrapper.groupDisplayName.equals("Style", ignoreCase = true) }
                 .filter { wrapper -> wrapper.id != "ChangeToMethod" } // this is not groovy style
                 .filter { wrapper -> wrapper is LocalInspectionToolWrapper }
                 .map { wrapper -> wrapper as LocalInspectionToolWrapper }
+                .toList()
     }
 }
