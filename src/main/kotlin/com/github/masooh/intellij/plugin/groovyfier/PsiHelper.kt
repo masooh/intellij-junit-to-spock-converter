@@ -10,10 +10,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 fun GrMethod.voidReturnToDef() {
-    // remove void
-    this.returnTypeElementGroovy!!.delete()
-    // add def
-    this.modifierList.setModifierProperty(GrModifier.DEF, true)
+    val factory = GroovyPsiElementFactory.getInstance(this.project)
+    val defModifier = factory.createModifierFromText(GrModifier.DEF)
+
+    // void -> def
+    this.returnTypeElementGroovy?.replace(defModifier)
 }
 
 fun GrMethod.removeStaticModifier() {
