@@ -8,6 +8,11 @@
     <artifactId>java-groovy</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
     <profiles>
         <profile>
             <id>spock</id>
@@ -24,11 +29,18 @@
                         visit https://github.com/groovy/GMavenPlus/wiki -->
                         <groupId>org.codehaus.gmavenplus</groupId>
                         <artifactId>gmavenplus-plugin</artifactId>
-                        <version>1.6.1</version>
+                        <version>1.6.3</version>
                         <executions>
                             <execution>
+                                <id>default-addTestSources</id>
                                 <goals>
-                                    <goal>testCompile</goal>
+                                    <goal>addTestSources</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>default-compileTests</id>
+                                <goals>
+                                    <goal>compileTests</goal>
                                 </goals>
                             </execution>
                         </executions>
