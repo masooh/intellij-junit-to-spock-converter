@@ -32,8 +32,8 @@ class OptimizeGroovy : AnAction() {
          */
     }
 
-    override fun update(event: AnActionEvent?): Unit {
-        val file = event!!.getData(PlatformDataKeys.PSI_FILE)
+    override fun update(event: AnActionEvent) {
+        val file = event.getData(PlatformDataKeys.PSI_FILE)
         val editor = event.getData(PlatformDataKeys.EDITOR)
 
         val enabled = file != null &&

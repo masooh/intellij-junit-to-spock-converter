@@ -1,27 +1,20 @@
 package com.github.masooh.intellij.plugin.groovyfier
 
-import java.util.ArrayList
-import java.util.stream.Collectors
-
-import com.intellij.openapi.actionSystem.CommonDataKeys
-
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.actions.AbstractPerformFixesTask
 import com.intellij.codeInspection.actions.CleanupInspectionUtil
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import java.util.*
 
 object GroovyFixesApplier {
     fun applyGroovyFixes(event: AnActionEvent) {
@@ -55,7 +48,7 @@ object GroovyFixesApplier {
     private fun inspectFileForProblems(project: Project?, file: PsiFile, groovyInspections: List<LocalInspectionToolWrapper>): List<ProblemDescriptor> {
         val problemDescriptors = ProgressManager.getInstance().runProcess<Map<String, List<ProblemDescriptor>>>({
             val inspectionManager = InspectionManager.getInstance(project!!)
-            InspectionEngine.inspectEx(groovyInspections, file, inspectionManager, false, false, EmptyProgressIndicator())
+            InspectionEngine.inspectEx(groovyInspections, file, inspectionManager, false, EmptyProgressIndicator())
         }, EmptyProgressIndicator())
 
         val descriptions = ArrayList<ProblemDescriptor>()

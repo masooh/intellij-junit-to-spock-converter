@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>com.github.masooh.intellij.plugin.groovyfier</id>
-  <name>Java To Groovy</name>
+  <name>Groovyfier</name>
   <version>0.1</version>
 
   <description><![CDATA[
@@ -15,7 +15,7 @@
   </change-notes>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-  <idea-version since-build="181"/>
+  <idea-version since-build="191"/>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
        on how to target different products -->¶
