@@ -86,7 +86,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 }
 
                 method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
-                      .voidReturnToDef()
+                        .voidReturnToDef()
 
                 changeMethodBody(method)
 
@@ -138,17 +138,21 @@ class JUnitToSpockApplier(event: AnActionEvent) {
     }
 
     private fun changeMethodBody(method: GrMethod) {
-        addWhenToFirstStatement(method)
-        replaceAsserts(method)
+        val hasAssertions = replaceAsserts(method)
+        addWhenToFirstStatement(method, hasAssertions)
     }
 
-    private fun replaceAsserts(method: GrMethod) {
+    /**
+     * FIXME wenn nur asserts vorkommen, dann statt when: then: ein expect:
+     * TODO bessere Logik: vor jedem assert ein then einfügen, außer das Statement davor war auch ein assert oder eine Zuweisung
+     * @return true if assertions where found
+     * */
+    private fun replaceAsserts(method: GrMethod): Boolean {
         val methodCalls = method.block!!.statements.filter { grStatement -> grStatement is GrMethodCallExpression }
 
         val firstAssertion = AtomicBoolean(true)
 
-        methodCalls.filter { grStatement -> grStatement is GrMethodCallExpression }
-                .map { grStatement -> grStatement as GrMethodCallExpression }
+        methodCalls.filterIsInstance<GrMethodCallExpression>()
                 .filter { methodCallExpression ->
                     val text = methodCallExpression.firstChild.text
                     // with or without import
@@ -156,33 +160,47 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 }.forEach { methodCall ->
                     val spockAssert = getSpockAssert(methodCall)
 
-                    if (firstAssertion.getAndSet(false)) {
-                        val spockAssertWithLabel = factory.createStatementFromText("then: expression")
-                        val grExpression = spockAssertWithLabel.lastChild as GrExpression
-                        grExpression.replaceWithExpression(spockAssert, true)
-                        methodCall.replaceElement(spockAssertWithLabel)
-                    } else {
-                        methodCall.replaceElement(spockAssert)
+                    if (spockAssert != null) {
+                        if (firstAssertion.getAndSet(false)) {
+                            val spockAssertWithLabel = factory.createStatementFromText("then: expression")
+                            val grExpression = spockAssertWithLabel.lastChild as GrExpression
+                            grExpression.replaceWithExpression(spockAssert, true)
+                            methodCall.replaceElement(spockAssertWithLabel)
+                        } else {
+                            methodCall.replaceElement(spockAssert)
+                        }
                     }
                 }
+
+        return !firstAssertion.get()
     }
 
-    private fun getSpockAssert(methodCallExpression: GrMethodCallExpression): GrExpression {
+    private fun getSpockAssert(methodCallExpression: GrMethodCallExpression): GrExpression? {
         val expressionArguments = methodCallExpression.argumentList.expressionArguments
 
         val firstArgument = expressionArguments[0]
         val secondArgument = if (expressionArguments.size > 1) expressionArguments[1] else null
 
-        val spockAssert: GrExpression
+        var spockAssert: GrExpression? = null
 
         // remove Assert class if there
         val methodName = methodCallExpression.firstChild.text.replace("Assert.", "")
         when (methodName) {
             "assertEquals" -> {
-                val equalsExpression = createExpression<GrBinaryExpression>("actual == expected")
-                equalsExpression.leftOperand.replaceWithExpression(secondArgument!!, true)
-                equalsExpression.rightOperand!!.replaceWithExpression(firstArgument, true)
-                spockAssert = equalsExpression
+                if (expressionArguments.size == 2) { // TODO assertEquals(message, expected, actual)
+                    val equalsExpression = createExpression<GrBinaryExpression>("actual == expected")
+                    equalsExpression.leftOperand.replaceWithExpression(secondArgument!!, true)
+                    equalsExpression.rightOperand!!.replaceWithExpression(firstArgument, true)
+                    spockAssert = equalsExpression
+                }
+            }
+            "assertNotEquals" -> {
+                if (expressionArguments.size == 2) { // TODO assertEquals(message, unexpected, actual)
+                    val equalsExpression = createExpression<GrBinaryExpression>("actual != unexpected")
+                    equalsExpression.leftOperand.replaceWithExpression(secondArgument!!, true)
+                    equalsExpression.rightOperand!!.replaceWithExpression(firstArgument, true)
+                    spockAssert = equalsExpression
+                }
             }
             "assertTrue" -> spockAssert = createExpression("actual").replaceWithExpression(firstArgument, true)
             "assertFalse" -> {
@@ -191,24 +209,36 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 spockAssert = unaryExpression
             }
             "assertNotNull" -> {
-                val notNullExpression = createExpression<GrBinaryExpression>("actual != null")
-                notNullExpression.leftOperand.replaceWithExpression(firstArgument, true)
-                spockAssert = notNullExpression
+                spockAssert = if (secondArgument != null) {
+                    // assertNotNull(message, object)
+                    createExpression<GrBinaryExpression>("actual != null // $firstArgument").apply {
+                        leftOperand.replaceWithExpression(secondArgument, true)
+                    }
+                } else {
+                    // assertNotNull(object)
+                    createExpression<GrBinaryExpression>("actual != null").apply {
+                        leftOperand.replaceWithExpression(firstArgument, true)
+                    }
+                }
+
             }
             "assertNull" -> {
                 val nullExpression = createExpression<GrBinaryExpression>("actual == null")
                 nullExpression.leftOperand.replaceWithExpression(firstArgument, true)
                 spockAssert = nullExpression
             }
-            else -> throw IllegalArgumentException("Unknown assert $methodName")
+            else -> {
+                LOG.error("Unknown assert $methodName")
+            }
         }
         return spockAssert
     }
 
-    private fun addWhenToFirstStatement(grMethod: GrMethod) {
+    private fun addWhenToFirstStatement(grMethod: GrMethod, hasAssertions: Boolean) {
         val firstStatement = grMethod.block!!.statements[0]
 
-        val firstStatementWithWhen = createStatementFromText<GrLabeledStatement>("when: expression")
+        val label = if (hasAssertions) "when" else "expect"
+        val firstStatementWithWhen = createStatementFromText<GrLabeledStatement>("$label: expression")
         firstStatementWithWhen.statement!!.replaceWithStatement(firstStatement)
 
         firstStatement.replaceElement(firstStatementWithWhen)

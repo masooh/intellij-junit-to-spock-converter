@@ -42,4 +42,11 @@ public class BookTest {
         book.setPages(-1);
     }
 
+    // todo assertNotNull, ... alle VArianten einpflegen
+
+    // TODO Test mit nur asserts
+
+    // TODO Test ohne assert, aber mit expected exception -> kein expect sondern when -> thrown zählt wie assert
+
+    // TODO Test mit @RunWith + @ContextConfig ... { ... }
 }
