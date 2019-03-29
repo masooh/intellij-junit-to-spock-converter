@@ -72,76 +72,65 @@ class JUnitToSpockApplier(event: AnActionEvent) {
     private fun changeMethods() {
         for (method in typeDefinition.codeMethods) {
 
-            changeMethodHavingAnnotation(method, "org.junit.Test") { annotation ->
+            changeMethodHavingAnnotation(method, "org.junit.Test", "org.junit.jupiter.api.Test") { annotation ->
                 var exceptionClass: GrReferenceExpression? = null
                 for (attribute in annotation.parameterList.attributes) {
                     when (attribute.name) {
                         "expected" -> exceptionClass = attribute.value as GrReferenceExpression
-                    // TODO timeout
+                        // TODO timeout
                         else -> LOG.error("unhandled attribute: {}", attribute.name)
                     }
                 }
 
-                Runnable {
-                    method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
-                    method.voidReturnToDef()
-                    changeMethodBody(method)
+                method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
+                      .voidReturnToDef()
 
-                    if (exceptionClass != null) {
-                        val statement = "then: thrown(${exceptionClass.qualifierExpression!!.text})"
-                        val thrownBlock = createStatementFromText<GrLabeledStatement>(statement)
+                changeMethodBody(method)
 
-                        // add would insert statement after closing }
-                        method.block!!.addBefore(thrownBlock, method.block!!.lastChild)
-                    }
+                if (exceptionClass != null) {
+                    val statement = "then: thrown(${exceptionClass.qualifierExpression!!.text})"
+                    val thrownBlock = createStatementFromText<GrLabeledStatement>(statement)
+
+                    // add would insert statement after closing }
+                    method.block!!.addBefore(thrownBlock, method.block!!.lastChild)
                 }
             }
 
-            // TODO handle JUnit 5 annotations
-            changeMethodHavingAnnotation(method, "org.junit.Before") {
-                Runnable {
-                    method.changeMethodNameTo("setup")
-                    method.voidReturnToDef()
-                }
+            changeMethodHavingAnnotation(method, "org.junit.Before", "org.junit.jupiter.api.BeforeEach") {
+                method.changeMethodNameTo("setup")
             }
 
-            changeMethodHavingAnnotation(method, "org.junit.After") {
-                Runnable {
-                    method.changeMethodNameTo("cleanup")
-                    method.voidReturnToDef()
-                }
+            changeMethodHavingAnnotation(method, "org.junit.After", "org.junit.jupiter.api.AfterEach") {
+                method.changeMethodNameTo("cleanup")
             }
 
-            changeMethodHavingAnnotation(method, "org.junit.BeforeClass") {
-                Runnable {
-                    method.changeMethodNameTo("setupSpec")
-                    method.removeStaticModifier()
-                    method.voidReturnToDef()
-                }
-
+            changeMethodHavingAnnotation(method, "org.junit.BeforeClass", "org.junit.jupiter.api.BeforeAll") {
+                method.changeMethodNameTo("setupSpec")
+                        .removeStaticModifier()
             }
 
-            changeMethodHavingAnnotation(method, "org.junit.AfterClass") {
-                Runnable {
-                    method.changeMethodNameTo("cleanupSpec")
-                    method.removeStaticModifier()
-                    method.voidReturnToDef()
-                }
+            changeMethodHavingAnnotation(method, "org.junit.AfterClass", "org.junit.jupiter.api.AfterAll") {
+                method.changeMethodNameTo("cleanupSpec")
+                        .removeStaticModifier()
             }
         }
     }
 
     /**
-     * also deletes the annotation
+     * also deletes the annotation and replaces void with def
      */
-    private fun changeMethodHavingAnnotation(method: GrMethod, annotationName: String,
-                                             changeInMethod: (PsiAnnotation) -> Runnable) {
+    private fun changeMethodHavingAnnotation(method: GrMethod, vararg annotationName: String,
+                                             changeInMethod: (PsiAnnotation) -> Unit) {
 
-        val annotation = PsiImplUtil.getAnnotation(method, annotationName)
+
+        val annotation = annotationName.asSequence().mapNotNull { PsiImplUtil.getAnnotation(method, it) }.firstOrNull()
 
         if (annotation != null) {
-            WriteCommandAction.runWriteCommandAction(project, changeInMethod(annotation))
-            WriteCommandAction.runWriteCommandAction(project) { annotation.delete() }
+            WriteCommandAction.runWriteCommandAction(project) {
+                changeInMethod(annotation)
+                annotation.delete()
+                method.voidReturnToDef()
+            }
         }
     }
 
@@ -160,8 +149,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 .filter { methodCallExpression ->
                     val text = methodCallExpression.firstChild.text
                     // with or without import
-                    methodCallExpression.
-                    text.startsWith("assert") || text.startsWith("Assert.")
+                    methodCallExpression.text.startsWith("assert") || text.startsWith("Assert.")
                 }.forEach { methodCall ->
                     val spockAssert = getSpockAssert(methodCall)
 

@@ -11,7 +11,16 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+
+        <junit.version>4.12</junit.version>
+        <junit.jupiter.version>5.4.1</junit.jupiter.version>
+        <junit.vintage.version>5.4.1</junit.vintage.version>
     </properties>
+
+    <description>
+        Sample project with JUnit 4 and 5
+        See also https://github.com/junit-team/junit5-samples/tree/master/junit5-migration-maven
+    </description>
 
     <profiles>
         <profile>
@@ -61,10 +70,36 @@
 
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>${junit.vintage.version}</version>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- JUnit 5 requires Surefire version 2.22.1 or higher -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.1</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>

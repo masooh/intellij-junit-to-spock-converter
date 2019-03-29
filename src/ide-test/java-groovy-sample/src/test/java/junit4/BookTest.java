@@ -1,6 +1,10 @@
+package junit4;
+
 import org.junit.*;
 
 import static org.junit.Assert.assertEquals;
+
+import sample.Book;
 
 public class BookTest {
 

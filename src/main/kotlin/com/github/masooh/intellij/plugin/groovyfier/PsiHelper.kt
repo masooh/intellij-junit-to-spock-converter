@@ -26,12 +26,14 @@ fun PsiElement.replaceElement(replacement: PsiElement) {
     this.delete()
 }
 
-fun GrMethod.changeMethodNameTo(name: String) {
+fun GrMethod.changeMethodNameTo(name: String): GrMethod {
     val factory = GroovyPsiElementFactory.getInstance(this.project)
     val methodFromText = factory.createMethodFromText("def $name() {}")
 
     // change name
     this.nameIdentifierGroovy.replace(methodFromText.nameIdentifierGroovy)
+
+    return this
 }
 
 fun PsiFile.getPsiClass(): PsiClass? {

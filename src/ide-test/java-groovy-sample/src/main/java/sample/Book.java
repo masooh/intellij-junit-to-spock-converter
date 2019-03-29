@@ -1,3 +1,5 @@
+package sample;
+
 public class Book {
     private String title;
     private Integer pages;

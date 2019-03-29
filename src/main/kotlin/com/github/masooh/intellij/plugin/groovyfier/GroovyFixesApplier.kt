@@ -18,7 +18,7 @@ import java.util.*
 
 object GroovyFixesApplier {
     fun applyGroovyFixes(event: AnActionEvent) {
-        val project = event.project
+        val project = event.project ?: return
         val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
 
@@ -37,7 +37,7 @@ object GroovyFixesApplier {
                 return
             }
 
-            val fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project!!, "Apply Groovy Fixes", problemDescriptors, null, false)
+            val fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Groovy Fixes", problemDescriptors, null, false)
 
             if (!fixesTask.isApplicableFixFound) {
                 HintManager.getInstance().showErrorHint(editor, "Unfortunately Groovy fixes are currently not available for batch mode\n User interaction is required for each problem found.")
@@ -45,9 +45,9 @@ object GroovyFixesApplier {
         }
     }
 
-    private fun inspectFileForProblems(project: Project?, file: PsiFile, groovyInspections: List<LocalInspectionToolWrapper>): List<ProblemDescriptor> {
+    private fun inspectFileForProblems(project: Project, file: PsiFile, groovyInspections: List<LocalInspectionToolWrapper>): List<ProblemDescriptor> {
         val problemDescriptors = ProgressManager.getInstance().runProcess<Map<String, List<ProblemDescriptor>>>({
-            val inspectionManager = InspectionManager.getInstance(project!!)
+            val inspectionManager = InspectionManager.getInstance(project)
             InspectionEngine.inspectEx(groovyInspections, file, inspectionManager, false, EmptyProgressIndicator())
         }, EmptyProgressIndicator())
 
