@@ -39,6 +39,9 @@ class JUnitToSpockApplier(event: AnActionEvent) {
     }
 
     fun transformToSpock() {
+        // spock has it's own runner
+        typeDefinition.getAnnotation("org.junit.runner.RunWith")?.delete()
+
         extendSpecification()
         changeMethods()
 
