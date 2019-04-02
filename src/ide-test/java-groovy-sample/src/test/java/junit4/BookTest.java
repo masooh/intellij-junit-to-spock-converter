@@ -35,7 +35,7 @@ public class BookTest {
     }
 
     @Test
-    public void asserts() {
+    public void assertsAlsoWithMessages() {
         assertNotNull(book);
         assertNotNull("book is present", book);
         assertNull(book.getPages());
@@ -60,6 +60,42 @@ public class BookTest {
     @Test(expected = IllegalArgumentException.class)
     public void expectArgumentException() {
         book.setPages(-1);
+    }
+
+    @Test
+    public void givenWhenThenComments() {
+        // given
+        Book bookToTest = new Book();
+
+        // when
+        bookToTest.setTitle("title");
+
+        // then
+        assertEquals("title", bookToTest.getTitle());
+    }
+
+    @Test
+    public void givenWhenThenAnalysis() {
+        // w
+        String title = "title";
+        Book bookToTest = new Book();
+        bookToTest.setTitle(title);
+
+        while (bookToTest.getPages() < 34) {
+            bookToTest.setPages(bookToTest.getPages() + 1);
+        }
+
+        // t
+        assertEquals("title", bookToTest.getTitle());
+
+        int pages = bookToTest.getPages(); // assignment stays in then
+        assertEquals(33, pages);
+
+        // w
+        bookToTest.setPages(22);
+
+        // t
+        assertEquals((Integer) 22, bookToTest.getPages());
     }
 
     // TODO Test ohne assert, aber mit expected exception -> kein expect sondern when -> thrown zählt wie assert
