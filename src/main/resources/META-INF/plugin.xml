@@ -17,6 +17,9 @@
             <li>Replace simple asserts(<code>assertEquals, assertTrue, assertNull</code>) and the according negated ones</li>
         </ul>
         <br/>
+        <b>Limitations:</b><br/>
+        This plugin has limitations in converting Java to Groovy as well as the replacement of JUnit features, nonetheless
+        it serves as a good start for the conversion.
         ]]>
     </description>
     <vendor url="https://github.com/masooh">masooh</vendor>
@@ -27,7 +30,7 @@
     </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="191"/>
+    <idea-version since-build="OVERRIDEN-BY-GRADLE"/>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->¶

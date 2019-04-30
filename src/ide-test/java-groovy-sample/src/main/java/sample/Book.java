@@ -23,5 +23,8 @@ public class Book {
         this.pages = pages;
     }
 
-
+    public String prefixTitle(String prefix) {
+        title = prefix + " " + title;
+        return title;
+    }
 }

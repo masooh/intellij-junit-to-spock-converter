@@ -8,6 +8,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.List;
+
 import sample.Book;
 
 public class BookTest {
@@ -76,12 +79,13 @@ public class BookTest {
 
     @Test
     public void givenWhenThenAnalysis() {
-        // w
+        // g
         String title = "title";
         Book bookToTest = new Book();
         bookToTest.setPages(10);
         bookToTest.setTitle(title);
 
+        // w
         while (bookToTest.getPages() < 34) {
             bookToTest.setPages(bookToTest.getPages() + 1);
         }
@@ -102,6 +106,38 @@ public class BookTest {
     @Test
     public void unknownAssertMustNotCauseException() {
         assertDoesNotExist();
+    }
+
+    /** replace only if it is just one loop at the end */
+    @Test
+    public void assertionInLoop() {
+        Book first = new Book();
+        first.setPages(10);
+
+        Book second = new Book();
+        second.setPages(10);
+
+        final List<Book> books = Arrays.asList(first, second);
+
+        // where
+        for (Book bookToTest : books) {
+            // then
+            assertEquals((Integer)10, bookToTest.getPages());
+            assertNull(bookToTest.getTitle());
+        }
+    }
+
+    @Test
+    public void similarAssertsToDataDriven() {
+        assertEquals("pre title1", createBook("title1").prefixTitle("pre"));
+        assertEquals(" title2", createBook("title2").prefixTitle(""));
+        assertEquals("prefix title3", createBook("title3").prefixTitle("prefix"));
+    }
+
+    private Book createBook(String title) {
+        final Book book = new Book();
+        book.setTitle(title);
+        return book;
     }
 
     private void assertDoesNotExist() {
