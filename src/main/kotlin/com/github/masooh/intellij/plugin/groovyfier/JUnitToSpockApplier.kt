@@ -311,7 +311,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 }
             }
             else -> {
-                log.error("Unknown assert $methodName")
+                log.warn("Unknown assert $methodName")
             }
         }
 

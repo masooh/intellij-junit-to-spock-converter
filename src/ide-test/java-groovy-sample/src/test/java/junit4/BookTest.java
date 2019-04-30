@@ -99,6 +99,15 @@ public class BookTest {
         assertEquals((Integer) 22, bookToTest.getPages());
     }
 
+    @Test
+    public void unknownAssertMustNotCauseException() {
+        assertDoesNotExist();
+    }
+
+    private void assertDoesNotExist() {
+
+    }
+
     // TODO Test ohne assert, aber mit expected exception -> kein expect sondern when -> thrown zählt wie assert
 
     // TODO Test mit @RunWith + @ContextConfig ... { ... }
