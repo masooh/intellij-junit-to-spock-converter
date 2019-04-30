@@ -1,39 +1,50 @@
 <idea-plugin>
-  <id>com.github.masooh.intellij.plugin.groovyfier</id>
-  <name>Groovyfier</name>
-  <version>0.1</version>
+    <id>com.github.masooh.intellij.plugin.groovyfier</id>
+    <name>Groovyfier</name>
+    <version>OVERRIDEN-BY-GRADLE</version>
 
-  <description><![CDATA[
-      Converts a Java class to a Groovy class.<br>
-      New action: Code -> Convert Java To Groovy.<br>
-      Focused on converting JUnit tests to Spock specs.
-    ]]></description>
-  <vendor url="https://github.com/masooh">masooh</vendor>
+    <description><![CDATA[
+        Converts a Java class to a Groovy class.<br/>
+        New action: Code -> Convert Java To Groovy.<br/>
+        Focused on converting JUnit tests to Spock specs.<br/>
+        <br/>
+        <b>Features:</b><br/>
+        <br/>
+        <ul>
+            <li>Convert Java class to Spock spec</li>
+            <li>Replace <code>@Before/@BeforeClass and @After/@AfterClass</code></li>
+            <li>Guess when/then/expect blocks</li>
+            <li>Replace simple asserts(<code>assertEquals, assertTrue, assertNull</code>) and the according negated ones</li>
+        </ul>
+        <br/>
+        ]]>
+    </description>
+    <vendor url="https://github.com/masooh">masooh</vendor>
 
-  <change-notes><![CDATA[
-    Initial version which can replace setup and tear down classes as well as asserts.
+    <change-notes><![CDATA[
+    Initial version. Simple features can be replaced.
     ]]>
-  </change-notes>
+    </change-notes>
 
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-  <idea-version since-build="191"/>
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="191"/>
 
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-       on how to target different products -->¶
-  <depends>com.intellij.modules.java</depends>
-  <depends>org.intellij.groovy</depends>
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->¶
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.intellij.groovy</depends>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
-  </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
 
-  <actions>
-    <!-- Add your actions here -->
-    <action id="JavaToGroovy.Convert" class="com.github.masooh.intellij.plugin.groovyfier.ConvertJavaToGroovy"
-            text="Convert Java To Groovy"
-            description="Converts the current Java file to Groovy">
-      <add-to-group group-id="CodeMenu" anchor="last"/>
-    </action>
-  </actions>
+    <actions>
+        <!-- Add your actions here -->
+        <action id="JavaToGroovy.Convert" class="com.github.masooh.intellij.plugin.groovyfier.ConvertJavaToGroovy"
+                text="Convert Java To Groovy"
+                description="Converts the current Java file to Groovy">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+    </actions>
 
 </idea-plugin>

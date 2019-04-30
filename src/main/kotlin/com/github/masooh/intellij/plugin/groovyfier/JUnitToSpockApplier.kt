@@ -72,8 +72,6 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         /* TODO Wicket feature: tester.assertComponent(FILE_LIST_PATH, ListView.class) -> then: (nur tester.assertX)
             nicht tester.lastRenderedPage.add(checkEventBehavior) oder tester.executeAjaxEvent(NEXT_STEP_LINK_PATH, "onclick")
          */
-        // TODO first line then: -> expect:
-
         optimizeImports()
     }
 
