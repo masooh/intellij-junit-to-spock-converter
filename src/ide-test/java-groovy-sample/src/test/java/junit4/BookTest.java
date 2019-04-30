@@ -79,6 +79,7 @@ public class BookTest {
         // w
         String title = "title";
         Book bookToTest = new Book();
+        bookToTest.setPages(10);
         bookToTest.setTitle(title);
 
         while (bookToTest.getPages() < 34) {
@@ -89,7 +90,7 @@ public class BookTest {
         assertEquals("title", bookToTest.getTitle());
 
         int pages = bookToTest.getPages(); // assignment stays in then
-        assertEquals(33, pages);
+        assertEquals(34, pages);
 
         // w
         bookToTest.setPages(22);

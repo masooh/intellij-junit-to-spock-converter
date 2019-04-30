@@ -1,5 +1,6 @@
 package com.github.masooh.intellij.plugin.groovyfier
 
+import com.github.masooh.intellij.plugin.groovyfier.Block.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -7,13 +8,17 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -23,16 +28,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
-import java.util.concurrent.atomic.AtomicBoolean
+
+enum class Block {
+    EXPECT, GIVEN, WHEN, THEN;
+
+    val label
+        get() = this.name.toLowerCase()
+}
 
 class JUnitToSpockApplier(event: AnActionEvent) {
+    companion object {
+        private val log = Logger.getInstance(JUnitToSpockApplier::class.java)
+    }
+
     private val project: Project = event.project!!
     private val psiFile: PsiFile = event.getRequiredData(PlatformDataKeys.PSI_FILE)
     private val editor: Editor = event.getRequiredData(PlatformDataKeys.EDITOR)
     private val typeDefinition: GrTypeDefinition
 
-    private val factory: GroovyPsiElementFactory
+    private val groovyFactory
         get() = GroovyPsiElementFactory.getInstance(project)
+
+    private val javaFactory
+        get() = JavaPsiFacade.getInstance(project).elementFactory
 
     init {
         typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
@@ -75,20 +93,21 @@ class JUnitToSpockApplier(event: AnActionEvent) {
     private fun changeMethods() {
         for (method in typeDefinition.codeMethods) {
 
+            // TODO extract changes in list and apply only one of it
             changeMethodHavingAnnotation(method, "org.junit.Test", "org.junit.jupiter.api.Test") { annotation ->
                 var exceptionClass: GrReferenceExpression? = null
                 for (attribute in annotation.parameterList.attributes) {
                     when (attribute.name) {
                         "expected" -> exceptionClass = attribute.value as GrReferenceExpression
                         // TODO timeout
-                        else -> LOG.error("unhandled attribute: {}", attribute.name)
+                        else -> log.error("unhandled attribute: {}", attribute.name)
                     }
                 }
 
                 method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
                         .voidReturnToDef()
 
-                changeMethodBody(method)
+                changeFeatureBody(method)
 
                 if (exceptionClass != null) {
                     val statement = "then: thrown(${exceptionClass.qualifierExpression!!.text})"
@@ -129,6 +148,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         val annotation = annotationName.asSequence().mapNotNull { PsiImplUtil.getAnnotation(method, it) }.firstOrNull()
 
         if (annotation != null) {
+            // todo macht es Sinn für jede Methode extra Write action?
             WriteCommandAction.runWriteCommandAction(project) {
                 changeInMethod(annotation)
                 annotation.delete()
@@ -137,121 +157,196 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         }
     }
 
-    private fun changeMethodBody(method: GrMethod) {
-        val hasAssertions = replaceAsserts(method)
-        addWhenToFirstStatement(method, hasAssertions)
-    }
+    private fun changeFeatureBody(method: GrMethod) {
+        val statements = method.block?.statements
 
-    /**
-     * FIXME wenn nur asserts vorkommen, dann statt when: then: ein expect:
-     * TODO bessere Logik: vor jedem assert ein then einfügen, außer das Statement davor war auch ein assert oder eine Zuweisung
-     * @return true if assertions where found
-     * */
-    private fun replaceAsserts(method: GrMethod): Boolean {
-        val methodCalls = method.block!!.statements.filter { grStatement -> grStatement is GrMethodCallExpression }
+        var currentBlock: Block? = null
 
-        val firstAssertion = AtomicBoolean(true)
-
-        methodCalls.filterIsInstance<GrMethodCallExpression>()
-                .filter { methodCallExpression ->
-                    val text = methodCallExpression.firstChild.text
-                    // with or without import
-                    methodCallExpression.text.startsWith("assert") || text.startsWith("Assert.")
-                }.forEach { methodCall ->
-                    val spockAssert = getSpockAssert(methodCall)
-
-                    if (spockAssert != null) {
-                        if (firstAssertion.getAndSet(false)) {
-                            val spockAssertWithLabel = factory.createStatementFromText("then: expression")
-                            val grExpression = spockAssertWithLabel.lastChild as GrExpression
-                            grExpression.replaceWithExpression(spockAssert, true)
-                            methodCall.replaceElement(spockAssertWithLabel)
-                        } else {
-                            methodCall.replaceElement(spockAssert)
+        statements?.forEach { statement ->
+            when (currentBlock) {
+                null -> {
+                    log.info("null:")
+                    currentBlock = when {
+                        statement.isAssertion() -> {
+                            val replacedStatement = replaceWithSpockAssert(statement as GrMethodCallExpression)
+                            addLabelToStatement(EXPECT, replacedStatement)
+                        }
+                        else -> {
+                            addLabelToStatement(WHEN, statement)
                         }
                     }
                 }
+                WHEN -> {
+                    log.info("when:")
+                    if (statement.isAssertion()) {
+                        // todo hier wird ersetzt, um das ersetzte wieder zu ersetzen
+                        //    kann man das in einem machen? statement replace with (label + spock assert)
+                        val statementWithSpockAssertion = replaceWithSpockAssert(statement as GrMethodCallExpression)
+                        currentBlock = addLabelToStatement(THEN, statementWithSpockAssertion)
+                    }
+                }
+                EXPECT -> {
+                    log.info("expect:")
+                    val block = handleExpectAndThen(statement)
+                    if (block != null) {
+                        currentBlock = block
+                    }
+                }
+                GIVEN -> {
+                    log.info("given:")
+                    TODO("given not implemented yet")
+                }
+                THEN -> {
+                    log.info("then:")
+                    val block = handleExpectAndThen(statement)
+                    if (block != null) {
+                        currentBlock = block
+                    }
+                }
+            }
 
-        return !firstAssertion.get()
+        }
     }
 
-    private fun getSpockAssert(methodCallExpression: GrMethodCallExpression): GrExpression? {
-        val expressionArguments = methodCallExpression.argumentList.expressionArguments
+    private fun handleExpectAndThen(statement: GrStatement): Block? {
+        return when {
+            statement.isAssertion() -> {
+                replaceWithSpockAssert(statement as GrMethodCallExpression)
+                null // stay in block
+            }
+            statement is GrVariableDeclaration -> {
+                null // stay in block
+            }
+            else -> {
+                addLabelToStatement(WHEN, statement) // next when
+            }
+        }
+    }
 
-        val firstArgument = expressionArguments[0]
-        val secondArgument = if (expressionArguments.size > 1) expressionArguments[1] else null
+    private fun addLabelToStatement(block: Block, statement: GrStatement): Block {
+        val statementWithLabel = groovyFactory.createStatementFromText("${block.label}: statement", statement.parent)
+        val textStatement = statementWithLabel.lastChild as GrStatement
+        textStatement.replaceWithStatement(statement)
+
+        // todo https://youtrack.jetbrains.com/issue/IDEA-185879
+        //  wie komme ich an attachement
+
+        statement.replaceWithStatement(statementWithLabel)
+        return block
+    }
+
+    private fun replaceWithSpockAssert(methodCallExpression: GrMethodCallExpression): GrExpression {
+        val argumentList = methodCallExpression.argumentList
 
         var spockAssert: GrExpression? = null
+        var message: GrExpression? = null
 
         // remove Assert class if there
         val methodName = methodCallExpression.firstChild.text.replace("Assert.", "")
+
         when (methodName) {
             "assertEquals" -> {
-                if (expressionArguments.size == 2) { // TODO assertEquals(message, expected, actual)
-                    val equalsExpression = createExpression<GrBinaryExpression>("actual == expected")
-                    equalsExpression.leftOperand.replaceWithExpression(secondArgument!!, true)
-                    equalsExpression.rightOperand!!.replaceWithExpression(firstArgument, true)
-                    spockAssert = equalsExpression
-                }
+                spockAssert = argumentList.withArgs(
+                        two = { expected, actual ->
+                            createBinaryExpression("actual == expected", actual, expected)
+                        },
+                        three = { msg, expected, actual ->
+                            message = msg
+                            createBinaryExpression("actual == expected", actual, expected)
+                        })
             }
             "assertNotEquals" -> {
-                if (expressionArguments.size == 2) { // TODO assertEquals(message, unexpected, actual)
-                    val equalsExpression = createExpression<GrBinaryExpression>("actual != unexpected")
-                    equalsExpression.leftOperand.replaceWithExpression(secondArgument!!, true)
-                    equalsExpression.rightOperand!!.replaceWithExpression(firstArgument, true)
-                    spockAssert = equalsExpression
+                spockAssert = argumentList.withArgs(
+                        two = { expected, actual ->
+                            createBinaryExpression("actual != unexpected", actual, expected)
+                        },
+                        three = { msg, expected, actual ->
+                            message = msg
+                            createBinaryExpression("actual != unexpected", actual, expected)
+                        })
+            }
+            "assertTrue" -> {
+                argumentList.withArgs(
+                        one = { it },
+                        two = { msg, cond ->
+                            message = msg
+                            cond
+                        })?.let {
+                    spockAssert = createExpression("condition").replaceWithExpression(it, true)
                 }
             }
-            "assertTrue" -> spockAssert = createExpression("actual").replaceWithExpression(firstArgument, true)
             "assertFalse" -> {
-                val unaryExpression = createExpression<GrUnaryExpression>("!actual")
-                unaryExpression.operand!!.replaceWithExpression(firstArgument, true)
-                spockAssert = unaryExpression
+                argumentList.withArgs(
+                        one = { it },
+                        two = { msg, condition ->
+                            message = msg
+                            condition
+                        })?.let {
+                    val unaryExpression = createExpression<GrUnaryExpression>("!actual")
+                    unaryExpression.operand!!.replaceWithExpression(it, true)
+                    spockAssert = unaryExpression
+                }
             }
             "assertNotNull" -> {
-                spockAssert = if (secondArgument != null) {
-                    // assertNotNull(message, object)
-                    createExpression<GrBinaryExpression>("actual != null // $firstArgument").apply {
-                        leftOperand.replaceWithExpression(secondArgument, true)
-                    }
-                } else {
-                    // assertNotNull(object)
-                    createExpression<GrBinaryExpression>("actual != null").apply {
-                        leftOperand.replaceWithExpression(firstArgument, true)
+                argumentList.withArgs(
+                        one = { it },
+                        two = { msg, obj ->
+                            message = msg
+                            obj
+                        }
+                )?.let {
+                    spockAssert = createExpression<GrBinaryExpression>("actual != null").apply {
+                        leftOperand.replaceWithExpression(it, true)
                     }
                 }
-
             }
             "assertNull" -> {
-                val nullExpression = createExpression<GrBinaryExpression>("actual == null")
-                nullExpression.leftOperand.replaceWithExpression(firstArgument, true)
-                spockAssert = nullExpression
+                argumentList.withArgs(
+                        one = { it },
+                        two = { msg, obj ->
+                            message = msg
+                            obj
+                        })?.let {
+                    val nullExpression = createExpression<GrBinaryExpression>("actual == null")
+                    nullExpression.leftOperand.replaceWithExpression(it, true)
+                    spockAssert = nullExpression
+                }
             }
             else -> {
-                LOG.error("Unknown assert $methodName")
+                log.error("Unknown assert $methodName")
             }
         }
-        return spockAssert
+
+        log.info("Replace $methodName, args: ${argumentList.expressionArguments.size} with $spockAssert")
+
+        return spockAssert?.let { assertion ->
+            // actual replacement if not done above
+            val replacedExpression = methodCallExpression.replaceWithExpression(assertion, true)
+
+            message?.let {
+                // add message as comment
+                val whiteSpaceAndComment = replacedExpression.createComment(it.text)
+                replacedExpression.addRangeAfter(whiteSpaceAndComment)
+            }
+            replacedExpression
+        } ?: methodCallExpression
     }
 
-    private fun addWhenToFirstStatement(grMethod: GrMethod, hasAssertions: Boolean) {
-        val firstStatement = grMethod.block!!.statements[0]
-
-        val label = if (hasAssertions) "when" else "expect"
-        val firstStatementWithWhen = createStatementFromText<GrLabeledStatement>("$label: expression")
-        firstStatementWithWhen.statement!!.replaceWithStatement(firstStatement)
-
-        firstStatement.replaceElement(firstStatementWithWhen)
+    private fun createBinaryExpression(expression: String, left: GrExpression, right: GrExpression): GrBinaryExpression {
+        val equalsExpression = createExpression<GrBinaryExpression>(expression)
+        equalsExpression.leftOperand.replaceWithExpression(left, true)
+        equalsExpression.rightOperand!!.replaceWithExpression(right, true)
+        return equalsExpression
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : GrStatement> createStatementFromText(expression: String): T {
-        return factory.createStatementFromText(expression) as T
+        return groovyFactory.createStatementFromText(expression) as T
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : GrExpression> createExpression(expression: String): T {
-        return factory.createExpressionFromText(expression) as T
+        return groovyFactory.createExpressionFromText(expression) as T
     }
 
     /**
@@ -259,7 +354,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
      */
     private fun extendSpecification() {
         if (typeDefinition.extendsList?.textLength == 0) {
-            val definition = factory.createTypeDefinition("class A extends spock.lang.Specification {}")
+            val definition = groovyFactory.createTypeDefinition("class A extends spock.lang.Specification {}")
             val extendsClause = definition.extendsClause!!
 
             // ask welchen Effekt hat command und groupID?
@@ -274,8 +369,14 @@ class JUnitToSpockApplier(event: AnActionEvent) {
     private fun camelToSpace(string: String): String {
         return StringUtil.join(GroovyNamesUtil.camelizeString(string), { StringUtil.decapitalize(it) }, " ")
     }
+}
 
-    companion object {
-        private val LOG = Logger.getInstance(JUnitToSpockApplier::class.java)
+private fun GrStatement.isAssertion(): Boolean {
+    return if (this is GrMethodCallExpression) {
+        val text = this.firstChild.text
+        // with or without import
+        text.startsWith("assert") || text.startsWith("Assert.")
+    } else {
+        false
     }
 }

@@ -1,13 +1,15 @@
 package com.github.masooh.intellij.plugin.groovyfier
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassOwner
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
+
+data class Range(val parent: PsiElement, val first: PsiElement, val last: PsiElement)
 
 fun GrMethod.voidReturnToDef() {
     val factory = GroovyPsiElementFactory.getInstance(this.project)
@@ -17,6 +19,20 @@ fun GrMethod.voidReturnToDef() {
     this.returnTypeElementGroovy?.replace(defModifier)
 }
 
+fun PsiElement.createComment(text: String): Range {
+    val factory = GroovyPsiElementFactory.getInstance(this.project)
+    // linebreak required otherwise -> def foo () {expression // "comment"}
+    val methodBody = factory.createMethodBodyFromText("""
+                                    expression // $text
+                                """)
+    val comment = methodBody.childrenOfType<PsiComment>()[0]
+    return Range(methodBody, comment.prevSibling, comment)
+}
+
+fun PsiElement.addRangeAfter(range: Range) {
+    this.parent.addRangeAfter(range.first, range.last, this)
+}
+
 fun GrMethod.removeStaticModifier() {
     this.modifierList.setModifierProperty(GrModifier.STATIC, false)
 }
@@ -24,6 +40,10 @@ fun GrMethod.removeStaticModifier() {
 fun PsiElement.replaceElement(replacement: PsiElement) {
     this.parent.addAfter(replacement, this)
     this.delete()
+}
+
+fun PsiElement.addAfter(element: PsiElement): PsiElement {
+    return this.parent.addAfter(element, this)
 }
 
 fun GrMethod.changeMethodNameTo(name: String): GrMethod {
@@ -48,6 +68,19 @@ fun PsiFile.getPsiClass(): PsiClass? {
         }
     }
     return null
+}
+
+fun GrArgumentList.withArgs(one: ((GrExpression) -> GrExpression)? = null,
+                                    two: ((GrExpression, GrExpression) -> GrExpression)? = null,
+                                    three: ((GrExpression, GrExpression, GrExpression) -> GrExpression)? = null) : GrExpression? {
+    val expressionArguments = this.expressionArguments
+
+    return when {
+        expressionArguments.size == 1 && one != null -> one(expressionArguments[0])
+        expressionArguments.size == 2 && two != null -> two(expressionArguments[0], expressionArguments[1])
+        expressionArguments.size == 3 && three != null -> three(expressionArguments[0], expressionArguments[1], expressionArguments[2])
+        else -> null
+    }
 }
 
 val LOG = Logger.getInstance("groovyfier.PsiHelper")
