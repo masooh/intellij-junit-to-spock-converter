@@ -108,6 +108,18 @@ public class BookTest {
         assertDoesNotExist();
     }
 
+    /**
+     * Last statement has to be considered as assertion, otherwise its no valid test
+     */
+    @Test
+    public void givenExpectAnalysis() {
+        // g
+        Book book = new Book();
+
+        // e
+        book.prefixTitle("blub");
+    }
+
     /** replace only if it is just one loop at the end */
     @Test
     public void assertionInLoop() {

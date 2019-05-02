@@ -10,10 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
@@ -105,15 +103,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
                         .voidReturnToDef()
 
-                changeFeatureBody(method)
-
-                if (exceptionClass != null) {
-                    val statement = "then: thrown(${exceptionClass.qualifierExpression!!.text})"
-                    val thrownBlock = createStatementFromText<GrLabeledStatement>(statement)
-
-                    // add would insert statement after closing }
-                    method.block!!.addBefore(thrownBlock, method.block!!.lastChild)
-                }
+                changeFeatureBody(method, exceptionClass)
             }
 
             changeMethodHavingAnnotation(method, "org.junit.Before", "org.junit.jupiter.api.BeforeEach") {
@@ -155,12 +145,12 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         }
     }
 
-    private fun changeFeatureBody(method: GrMethod) {
+    private fun changeFeatureBody(method: GrMethod, exceptionClass: GrReferenceExpression?) {
         val statements = method.block?.statements
 
         var currentBlock: Block? = null
 
-        statements?.forEach { statement ->
+        statements?.forEachIndexed { idx, statement ->
             when (currentBlock) {
                 null -> {
                     log.info("null:")
@@ -170,7 +160,18 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                             addLabelToStatement(EXPECT, replacedStatement)
                         }
                         else -> {
-                            addLabelToStatement(WHEN, statement)
+                            val nextStatement = statements.getOrNull(idx + 1)
+                            when {
+                                nextStatement == null -> {
+                                    when {
+                                        exceptionClass != null -> addLabelToStatement(WHEN, statement)
+                                        // -> method has only single statement
+                                        else -> addLabelToStatement(EXPECT, statement)
+                                    }
+                                }
+                                nextStatement.isAssertion() -> addLabelToStatement(WHEN, statement)
+                                else -> addLabelToStatement(GIVEN, statement)
+                            }
                         }
                     }
                 }
@@ -192,7 +193,13 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                 }
                 GIVEN -> {
                     log.info("given:")
-                    TODO("given not implemented yet")
+                    val nextStatement = statements.getOrNull(idx + 1)
+                    when {
+                        nextStatement == null && exceptionClass == null -> currentBlock = addLabelToStatement(EXPECT, statement)
+                        (nextStatement == null && exceptionClass != null) || nextStatement!!.isAssertion() -> {
+                            currentBlock = addLabelToStatement(WHEN, statement)
+                        }
+                    }
                 }
                 THEN -> {
                     log.info("then:")
@@ -202,8 +209,16 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                     }
                 }
             }
-
         }
+
+        if (exceptionClass != null) {
+            val statement = "then: thrown(${exceptionClass.qualifierExpression!!.text})"
+            val thrownBlock = createStatementFromText<GrLabeledStatement>(statement)
+
+            // add would insert statement after closing }
+            method.block!!.addBefore(thrownBlock, method.block!!.lastChild)
+        }
+
     }
 
     private fun handleExpectAndThen(statement: GrStatement): Block? {
