@@ -17,8 +17,9 @@ intellij {
 }
 
 tasks.withType<PublishTask> {
-    username(project.property("intellijPublishUsername"))
-    password(project.property("intellijPublishPassword"))
+    if (project.hasProperty("intellijPublishToken")) {
+        token(project.property("intellijPublishToken"))
+    }
 }
 
 group = "com.github.masooh.intellij.plugin.groovyfier"
