@@ -1,0 +1,24 @@
+= Groovyfier
+
+Groovyfier is a plug-in for IntelliJ IDEA: https://plugins.jetbrains.com/plugin/12335-groovyfier.
+
+It's inspired by https://github.com/opaluchlukasz/junit2spock[junit2spock] and has the same goal: Facilitate the transition from JUnit to Spock.
+The project is in an early stage and has at the moment only a subset of the features of
+https://github.com/opaluchlukasz/junit2spock[junit2spock].
+
+
+== Roadmap
+
+- Documentation
+** Commit converted test to show what works and what not: https://github.com/masooh/groovyfier/blob/master/src/ide-test/java-groovy-sample/src/test/java/junit4/BookTest.java[BookTest]
+** Plugin description with small video like IntelliJ new features
+- Quality
+** Unit Tests for plugin itself
+** Build with Travis CI
+** Make Github releases
+- Framework support
+** Mockito
+** Wicket
+** Hamcrest
+- Spock features
+** create data driven tests if test contains only similar assertions
