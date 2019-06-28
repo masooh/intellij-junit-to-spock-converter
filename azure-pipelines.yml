@@ -15,12 +15,6 @@ pool:
 
 steps:
   - bash: |
-      APP_HOME="`pwd -P`"
-      echo $APP_HOME
-      CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
-      echo $CLASSPATH
-      java -version
-      ls -l $CLASSPATH
       ./gradlew --version
   - task: Gradle@2
     inputs:
@@ -33,3 +27,8 @@ steps:
       publishJUnitResults: false
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'test buildPlugin'
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: 'build/distributions'
+      archiveType: 'zip' # Options: zip, 7z, tar, wim
+      verbose: # Optional
