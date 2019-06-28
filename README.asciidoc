@@ -1,11 +1,12 @@
 = Groovyfier
 
+image::https://dev.azure.com/melius-coder/Groovyfier/_apis/build/status/masooh.groovyfier?branchName=master[Build Status, link=https://dev.azure.com/melius-coder/Groovyfier/_build/latest?definitionId=1&branchName=master]
+
 Groovyfier is a plug-in for IntelliJ IDEA: https://plugins.jetbrains.com/plugin/12335-groovyfier.
 
 It's inspired by https://github.com/opaluchlukasz/junit2spock[junit2spock] and has the same goal: Facilitate the transition from JUnit to Spock.
 The project is in an early stage and has at the moment only a subset of the features of
 https://github.com/opaluchlukasz/junit2spock[junit2spock].
-
 
 == Roadmap
 
