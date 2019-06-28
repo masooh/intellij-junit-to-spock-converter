@@ -21,9 +21,7 @@ steps:
       echo $CLASSPATH
       java -version
       ls -l $CLASSPATH
-      find .
-      tree
-#      ./gradlew --version
+      ./gradlew --version
   - task: Gradle@2
     inputs:
       workingDirectory: ''
