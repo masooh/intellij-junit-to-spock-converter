@@ -15,8 +15,10 @@ pool:
 
 steps:
   - bash: |
-      set -x
-      pwd -P
+      APP_HOME="`pwd -P`"
+      echo $APP_HOME
+      CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+      echo $CLASSPATH
       ./gradlew --version
   - task: Gradle@2
     inputs:
