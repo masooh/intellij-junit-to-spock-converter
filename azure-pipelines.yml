@@ -20,8 +20,10 @@ steps:
       CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
       echo $CLASSPATH
       java -version
-      java -classpath $CLASSPATH org.gradle.wrapper.GradleWrapperMain --version
-      ./gradlew --version
+      ls -l $CLASSPATH
+      find .
+      tree
+#      ./gradlew --version
   - task: Gradle@2
     inputs:
       workingDirectory: ''
