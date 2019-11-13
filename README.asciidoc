@@ -2,6 +2,9 @@
 
 image::https://dev.azure.com/melius-coder/Groovyfier/_apis/build/status/masooh.groovyfier?branchName=master[Build Status, link=https://dev.azure.com/melius-coder/Groovyfier/_build/latest?definitionId=1&branchName=master]
 
+
+image::https://github.com/masooh/groovyfier/workflows/test/badge.svg[Workflow Status,link=https://github.com/masooh/groovyfier/actions?query=workflow%3Atest]
+
 Groovyfier is a plug-in for IntelliJ IDEA: https://plugins.jetbrains.com/plugin/12335-groovyfier.
 
 It's inspired by https://github.com/opaluchlukasz/junit2spock[junit2spock] and has the same goal: Facilitate the transition from JUnit to Spock. The advantage compared to the command line tool is the integration in the IDE.
