@@ -10,5 +10,4 @@ jobs:
       - uses: actions/checkout@master
         with:
           fetch-depth: 1
-      - run: ls -l
-      - run: pwd
+      - run: ./gradlew --version
