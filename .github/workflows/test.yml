@@ -7,5 +7,8 @@ jobs:
     container:
       image:  maven:3-jdk-8-slim
     steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
       - run: ls -l
       - run: pwd
