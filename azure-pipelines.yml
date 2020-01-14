@@ -25,4 +25,4 @@ steps:
       jdkArchitectureOption: 'x64'
       publishJUnitResults: false
       testResultsFiles: '**/TEST-*.xml'
-      tasks: 'test buildPlugin'
+      tasks: 'test sonarqube buildPlugin'

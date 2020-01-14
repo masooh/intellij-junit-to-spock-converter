@@ -8,6 +8,16 @@ plugins {
     idea
     id("org.jetbrains.intellij") version "0.4.8" // https://github.com/JetBrains/gradle-intellij-plugin
     id ("org.jetbrains.kotlin.jvm") version "1.3.31"
+    id("org.sonarqube") version "2.8"
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "masooh_groovyfier")
+        property("sonar.organization", "masooh")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.login", "a33bf2e7694238965372c69a490d0b5c7ce56b58")
+    }
 }
 
 intellij {
