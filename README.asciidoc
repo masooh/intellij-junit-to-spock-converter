@@ -10,6 +10,142 @@ It's inspired by https://github.com/opaluchlukasz/junit2spock[junit2spock] and h
 The project is in an early stage and has at the moment only a subset of the features of
 https://github.com/opaluchlukasz/junit2spock[junit2spock].
 
+After converting your JUnit test to a spock specification it probably will be 100% correct,
+but it will save you a lot of stupid conversion work.
+
+== Features
+
+The following can be replaced:
+
+.
+[cols="1a,1a"]
+|===
+|JUnit 4 | Spock
+|
+[source,java]
+----
+----
+|
+[source,groovy]
+----
+----
+|===
+
+.test method -> feature method
+[cols="1a,1a"]
+|===
+|JUnit 4 / 5 | Spock
+|
+[source,java]
+----
+@Test
+public void assertOnly() {
+    assertNotNull(book);
+}
+----
+|
+[source,groovy]
+----
+def "assert only"() {
+    expect:
+    book != null
+}
+----
+|===
+
+.Replace Setup/Cleanup annotations
+[cols="1a,1a"]
+|===
+|JUnit 4 / 5 | Spock
+|
+[source,java]
+----
+@BeforeClass / @BeforeAll
+public static void beforeClass() { }
+
+@AfterClass / @AfterAll
+public static void afterClass() { }
+
+@Before / @BeforeEach
+public void setUp() { }
+
+@After / @AfterEach
+public void tearDown() { }
+----
+|
+[source,groovy]
+----
+def setupSpec() { }
+
+def cleanupSpec() { }
+
+def setup() { }
+
+def cleanup() { }
+----
+|===
+
+.Replace assertions, messages convert to comments
+[cols="1a,1a"]
+|===
+|JUnit 4 / 5 | Spock
+|
+[source,java]
+----
+assertNotNull(book);
+assertNull(book.getPages());
+assertEquals((Integer) 33, book.getPages());
+assertTrue(book.getPages() > 0);
+assertFalse(book.getPages() < 0);
+assertNotNull("book is present", book);
+----
+|
+[source,groovy]
+----
+book != null
+book.pages == null
+book.pages == (Integer) 33
+book.pages > 0
+!(book.pages < 0)
+book != null // "book is present"
+----
+|===
+
+.Expected exceptions -> thrown
+[cols="1a,1a"]
+|===
+|JUnit 4 (only) | Spock
+|
+[source,java]
+----
+@Test(expected = IllegalArgumentException.class)
+public void expectArgumentException() {
+    book.setPages(-1);
+}
+----
+|
+[source,groovy]
+----
+def "expect argument exception"() {
+    when:
+    book.pages = -1
+    then:
+    thrown(IllegalArgumentException)
+}
+----
+|===
+
+
+== Limitations
+
+The following is not (yet) possible:
+
+- Spock is not added by the plugin to your build system (`pom.xml` or `build.gradle`).
+  Have a look at https://github.com/spockframework/spock-example/blob/spock-1.x/pom.xml[spock-example/pom.xml at spock-1.x · spockframework/spock-example]
+  or the more minimalistic version in this test project: link:src/ide-test/java-groovy-sample/pom.xml[java-groovy-sample/pom.xml].
+- Junit 5: `assertThrows`
+- Java lambdas are not converted to Groovy closures
+
 == Roadmap
 
 - Documentation
@@ -17,6 +153,7 @@ https://github.com/opaluchlukasz/junit2spock[junit2spock].
 ** Plugin description with small video like IntelliJ new features
 - Quality
 ** Unit Tests for plugin itself
+- Separate code, so that it can be easily extended with new features and it's easier to provide pull requests.
 - Framework support
 ** Mockito
 ** Wicket
