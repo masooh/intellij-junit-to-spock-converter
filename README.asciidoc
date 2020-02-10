@@ -17,6 +17,7 @@ but it will save you a lot of stupid conversion work.
 
 The following can be replaced:
 
+////
 .
 [cols="1a,1a"]
 |===
@@ -30,6 +31,7 @@ The following can be replaced:
 ----
 ----
 |===
+////
 
 .test method -> feature method
 [cols="1a,1a"]
