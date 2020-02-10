@@ -10,7 +10,7 @@ It's inspired by https://github.com/opaluchlukasz/junit2spock[junit2spock] and h
 The project is in an early stage and has at the moment only a subset of the features of
 https://github.com/opaluchlukasz/junit2spock[junit2spock].
 
-After converting your JUnit test to a spock specification it probably will be 100% correct,
+After converting your JUnit test to a spock specification it probably will not be 100% correct,
 but it will save you a lot of stupid conversion work.
 
 == Features
