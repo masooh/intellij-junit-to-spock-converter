@@ -7,7 +7,7 @@ plugins {
     `kotlin-dsl`
     idea
     id("org.jetbrains.intellij") version "0.4.8" // https://github.com/JetBrains/gradle-intellij-plugin
-    id ("org.jetbrains.kotlin.jvm") version "1.3.31"
+    id ("org.jetbrains.kotlin.jvm") version "1.3.61"
     id("org.sonarqube") version "2.8"
 }
 
@@ -33,7 +33,7 @@ tasks.withType<PublishTask> {
 }
 
 group = "com.github.masooh.intellij.plugin.groovyfier"
-version = "0.1" // overrides plugin.xml version in case of conflict
+version = "0.2" // overrides plugin.xml version in case of conflict
 
 repositories {
     mavenCentral()

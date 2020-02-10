@@ -280,29 +280,29 @@ class JUnitToSpockApplier(event: AnActionEvent) {
             }
             "assertTrue" -> {
                 argumentList.withArgs(
-                        one = { it },
+                        one = { condition -> condition },
                         two = { msg, cond ->
                             message = msg
                             cond
-                        })?.let {
-                    spockAssert = createExpression("condition").replaceWithExpression(it, true)
+                        })?.let { condition ->
+                    spockAssert = createExpression<GrReferenceExpression>("condition").replaceWithExpression(condition, true)
                 }
             }
             "assertFalse" -> {
                 argumentList.withArgs(
-                        one = { it },
+                        one = { condition -> condition },
                         two = { msg, condition ->
                             message = msg
                             condition
-                        })?.let {
+                        })?.let { condition ->
                     val unaryExpression = createExpression<GrUnaryExpression>("!actual")
-                    unaryExpression.operand!!.replaceWithExpression(it, true)
+                    unaryExpression.operand!!.replaceWithExpression(condition, true)
                     spockAssert = unaryExpression
                 }
             }
             "assertNotNull" -> {
                 argumentList.withArgs(
-                        one = { it },
+                        one = { obj -> obj },
                         two = { msg, obj ->
                             message = msg
                             obj
@@ -315,7 +315,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
             }
             "assertNull" -> {
                 argumentList.withArgs(
-                        one = { it },
+                        one = { obj -> obj },
                         two = { msg, obj ->
                             message = msg
                             obj
@@ -346,10 +346,10 @@ class JUnitToSpockApplier(event: AnActionEvent) {
     }
 
     private fun createBinaryExpression(expression: String, left: GrExpression, right: GrExpression): GrBinaryExpression {
-        val equalsExpression = createExpression<GrBinaryExpression>(expression)
-        equalsExpression.leftOperand.replaceWithExpression(left, true)
-        equalsExpression.rightOperand!!.replaceWithExpression(right, true)
-        return equalsExpression
+        return createExpression<GrBinaryExpression>(expression).apply {
+            leftOperand.replaceWithExpression(left, true)
+            rightOperand!!.replaceWithExpression(right, true)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

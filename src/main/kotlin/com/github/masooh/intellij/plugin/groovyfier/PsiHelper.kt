@@ -70,6 +70,9 @@ fun PsiFile.getPsiClass(): PsiClass? {
     return null
 }
 
+/**
+ * If [this] has 2 arguments, function [two] is called. If 3 that function [three], ...
+ */
 fun GrArgumentList.withArgs(one: ((GrExpression) -> GrExpression)? = null,
                                     two: ((GrExpression, GrExpression) -> GrExpression)? = null,
                                     three: ((GrExpression, GrExpression, GrExpression) -> GrExpression)? = null) : GrExpression? {
