@@ -59,7 +59,7 @@ object GroovyFixesApplier {
     }
 
     private fun findGroovyInspections(): List<LocalInspectionToolWrapper> {
-        val inspectionToolWrappers = InspectionToolRegistrar.getInstance().get()
+        val inspectionToolWrappers = InspectionToolRegistrar.getInstance().createTools()
         return inspectionToolWrappers
                 .asSequence()
                 .filter { inspectionToolWrapper -> inspectionToolWrapper.language != null && inspectionToolWrapper.language!!.equals("groovy", ignoreCase = true) }

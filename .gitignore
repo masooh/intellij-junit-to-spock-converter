@@ -4,5 +4,6 @@
 build
 *.ipr
 *.iml
+*.iws
 out
 .gradle
