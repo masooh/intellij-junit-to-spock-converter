@@ -2,10 +2,15 @@ package com.github.masooh.intellij.plugin.groovyfier
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
+// no virtual file
+
 class ConvertJavaToGroovyTest : LightJavaCodeInsightFixtureTestCase() {
 
+    override fun getTestDataPath() = "src/test/resources/testdata"
 
     fun testName() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        myFixture.configureByFile("BookTest.java")
+        myFixture.testAction(ConvertJavaToGroovy())
+        myFixture.checkResultByFile("BookTest.groovy")
     }
 }
