@@ -1,0 +1,97 @@
+= Plugin Development
+
+- https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html
+- link:https://intellij-support.jetbrains.com/hc/en-us/community/topics/200366979-IntelliJ-IDEA-Open-API-and-Plugin-Development[IntelliJ IDEA Open API and Plugin Development – IDEs Support (IntelliJ Platform) | JetBrains]
+
+`VirtualFile` represents real file, there may exist multiple VirtualFile, but hashCode is equal.
+
+`com.intellij.testFramework.LightVirtualFile`: In-memory implementation of `VirtualFile`.
+
+fileType
+
+com.intellij.psi.impl.file.impl.FileManagerImpl.createFileViewProvider
+
+com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.getFileTypeByFile(com.intellij.openapi.vfs.VirtualFile, byte[])
+
+== PSI
+
+PsiFile
+
+- Groovy: GroovyFile
+
+
+== Snippets
+
+[source,java]
+.com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+----
+private static void copyContent(File sourceFile, VirtualFile targetFile) {
+    try {
+      WriteAction.runAndWait(() -> {
+        targetFile.setBinaryContent(FileUtil.loadFileBytes(sourceFile));
+        // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
+        FileDocumentManager.getInstance().reloadFiles(targetFile);
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+----
+
+== Groovy
+
+`plugins/groovy/src/META-INF/plugin.xml`
+
+
+Groovy Test, no entry for groovy
+FileType type = myPatternsTable.findAssociatedFileType(fileName);
+
+filled by platform/platform-resources/src/defaultFileTypes.xml
+
+no groovy
+
+is added by
+
+----
+extension = {FileTypeExtensionPoint@8228}
+filetype = "Groovy"
+implementationClass = "org.jetbrains.plugins.groovy.highlighter.GroovyTodoIndexer"
+pluginDescriptor = {IdeaPluginDescriptorImpl@8230} "PluginDescriptor(name=Groovy, classpath=/home/mhofmannsobik/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.idea/ideaIC/2019.3.3/4c54deba9ff34a615b3072cd2def3558ff462987/ideaIC-2019.3.3/plugins/Groovy)"
+instance = null
+----
+
+Groovy Plugin
+
+
+org.jetbrains.plugins.groovy.GroovyFileType
+
+register
+
+see link:https://www.jetbrains.org/intellij/sdk/docs/tutorials/custom_language_support/language_and_filetype.html[2. Language and File Type]
+
+[source, xml]
+.plugins/groovy/src/META-INF/plugin.xml
+----
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Groovy" language="Groovy" extensions="groovy;gy" hashBangs="groovy"
+              implementationClass="org.jetbrains.plugins.groovy.GroovyFileType" fieldName="GROOVY_FILE_TYPE"/>
+----
+
+
+
+
+
+=== Inspections
+
+`<localInspection>`
+
+eigener Groovy Visitor
+
+GroovyListGetCanBeKeyedAccessInspection
+
+durch `registerMethodCallError` wird Fehler festgehalten -> weitere `register*` Methoden
+
+Fix durch `GroovyFix` mit `doFix()` was dann `replaceExpression` aufruft
+
+
