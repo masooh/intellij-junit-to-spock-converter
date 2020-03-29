@@ -2,6 +2,12 @@
 
 - https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html
 - link:https://intellij-support.jetbrains.com/hc/en-us/community/topics/200366979-IntelliJ-IDEA-Open-API-and-Plugin-Development[IntelliJ IDEA Open API and Plugin Development – IDEs Support (IntelliJ Platform) | JetBrains]
+- link:https://intellij-support.jetbrains.com/hc/en-us/community/posts/360006494439--ANN-JetBrains-Platform-Slack-for-plugin-developers[[ANN\] JetBrains Platform Slack for plugin developers – IDEs Support (IntelliJ Platform) | JetBrains]
+** `#intellij-platform`. Plugin development for IntelliJ Platform.
+** TODO read all
+
+- link:https://github.com/JetBrains/intellij-sdk-docs/tree/master/code_samples[intellij-sdk-docs/code_samples at master · JetBrains/intellij-sdk-docs]
+** TODO read all
 
 `VirtualFile` represents real file, there may exist multiple VirtualFile, but hashCode is equal.
 
