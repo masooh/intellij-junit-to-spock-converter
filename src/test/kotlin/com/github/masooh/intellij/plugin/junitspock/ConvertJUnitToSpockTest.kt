@@ -4,11 +4,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 //class ConvertJavaToGroovyTest2 : LightJavaCodeInsightFixtureTestCase() {
-class ConvertJavaToGroovyTest : LightGroovyTestCase() {
+class ConvertJavaToGroovyTest : LightJavaCodeInsightFixtureTestCase() {
 
     override fun getTestDataPath() = "src/test/resources/testdata"
 

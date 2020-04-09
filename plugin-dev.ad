@@ -1,4 +1,5 @@
 = Plugin Development
+:toc:
 
 - https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html
 - link:https://intellij-support.jetbrains.com/hc/en-us/community/topics/200366979-IntelliJ-IDEA-Open-API-and-Plugin-Development[IntelliJ IDEA Open API and Plugin Development – IDEs Support (IntelliJ Platform) | JetBrains]
@@ -18,6 +19,12 @@ fileType
 com.intellij.psi.impl.file.impl.FileManagerImpl.createFileViewProvider
 
 com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.getFileTypeByFile(com.intellij.openapi.vfs.VirtualFile, byte[])
+
+== Deployment / Publishing
+
+- link:https://github.com/JetBrains/intellij-plugin-verifier[JetBrains/intellij-plugin-verifier: Compatibility verification tool for IntelliJ Platform plugins]
+
+
 
 == PSI
 
@@ -85,7 +92,26 @@ see link:https://www.jetbrains.org/intellij/sdk/docs/tutorials/custom_language_s
 ----
 
 
+=== PSI Snippets
 
+
+[source,java]
+.method and annotations
+----
+method.name // "beforeClass"
+// works in test and production
+method.annotations.first().text // "@BeforeClass"
+// works only in production otherwise null
+method.modifierList?.findAnnotation("org.junit.BeforeClass") // {GrAnnotationImpl@45019} "Annotation"
+// same with helper method
+PsiImplUtil.getAnnotation(method, "org.junit.BeforeClass")
+
+GrModifierListImpl
++ addAnnotation
+
+// in test is qualifiedName empty (this = GrAnnotationImpl)
+this.qualifiedName
+----
 
 
 === Inspections
