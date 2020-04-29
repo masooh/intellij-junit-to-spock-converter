@@ -1,147 +1,175 @@
 package junit4
 
-import org.junit.*
+
 import sample.Book
+import spock.lang.Specification
 
-import static org.junit.Assert.*
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNull
 
-public class BookTest {
+class BookTest extends Specification {
 
-    private Book book = new Book();
+    private Book book = new Book()
 
-    @BeforeClass
-    public static void beforeClass() {
-        System.out.println("starting book test");
+
+    def setupSpec() {
+        System.out.println("starting book test")
     }
 
-    @AfterClass
-    public static void afterClass() {
-        System.out.println("end of book test");
+
+    def cleanupSpec() {
+        System.out.println("end of book test")
     }
 
-    @Before
-    public void setUp() {
-        book.setTitle("book title");
+
+    def setup() {
+        book.title = "book title"
     }
 
-    @After
-    public void tearDown() {
-        book = null;
+
+    def cleanup() {
+        book = null
     }
 
-    @Test
-    public void assertsAlsoWithMessages() {
-        assertNotNull(book);
-        assertNotNull("book is present", book);
-        assertNull(book.getPages());
-        assertNull("pages initial state is null", book.getPages());
 
-        book.setPages(33);
+    def "asserts also with messages"() {
+        expect:
+        book != null
+        book != null // "book is present"
 
-        assertEquals((Integer) 33, book.getPages());
-        assertEquals("pages set to 33", (Integer) 33, book.getPages());
+        book.pages == null
+        book.pages == null // "pages initial state is null"
 
-        assertTrue(book.getPages() > 0);
-        assertTrue("pages must not be negative", book.getPages() > 0);
-        assertFalse(book.getPages() < 0);
-        assertFalse("pages must not be negative", book.getPages() < 0);
+
+        when:
+        book.pages = 33
+
+        then:
+        book.pages == (Integer) 33
+        book.pages == (Integer) 33 // "pages set to 33"
+
+
+        book.pages > 0
+        book.pages > 0 // "pages must not be negative"
+
+        !(book.pages < 0)
+        !(book.pages < 0) // "pages must not be negative"
+
     }
 
-    @Test
-    public void assertOnly() {
-        assertNotNull(book);
+
+    def "assert only"() {
+        expect:
+        book != null
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void expectArgumentException() {
-        book.setPages(-1);
+
+    def "expect argument exception"() {
+        when:
+        book.pages = -1
+        then:
+        thrown(IllegalArgumentException)
     }
 
-    @Test
-    public void givenWhenThenComments() {
+
+    def "given when then comments"() {
         // given
-        Book bookToTest = new Book();
+        given:
+        Book bookToTest = new Book()
 
         // when
-        bookToTest.setTitle("title");
+        when:
+        bookToTest.title = "title"
 
         // then
-        assertEquals("title", bookToTest.getTitle());
+        then:
+        bookToTest.title == "title"
     }
 
-    @Test
-    public void givenWhenThenAnalysis() {
+
+    def "given when then analysis"() {
         // g
-        String title = "title";
-        Book bookToTest = new Book();
-        bookToTest.setPages(10);
-        bookToTest.setTitle(title);
+        given:
+        String title = "title"
+        Book bookToTest = new Book()
+        bookToTest.pages = 10
+        bookToTest.title = title
 
         // w
-        while (bookToTest.getPages() < 34) {
-            bookToTest.setPages(bookToTest.getPages() + 1);
+        when:
+        while (bookToTest.pages < 34) {
+            bookToTest.pages = bookToTest.pages + 1
         }
 
         // t
-        assertEquals("title", bookToTest.getTitle());
+        then:
+        bookToTest.title == "title"
 
-        int pages = bookToTest.getPages(); // assignment stays in then
-        assertEquals(34, pages);
+        int pages = bookToTest.pages // assignment stays in then
+        pages == 34
 
         // w
-        bookToTest.setPages(22);
+        when:
+        bookToTest.pages = 22
 
         // t
-        assertEquals((Integer) 22, bookToTest.getPages());
+        then:
+        bookToTest.pages == (Integer) 22
     }
 
-    @Test
-    public void unknownAssertMustNotCauseException() {
-        assertDoesNotExist();
+
+    def "unknown assert must not cause exception"() {
+        expect:
+        assertDoesNotExist()
     }
 
     /**
      * Last statement has to be considered as assertion, otherwise its no valid test
      */
-    @Test
-    public void givenExpectAnalysis() {
+
+    def "given expect analysis"() {
         // g
-        Book book = new Book();
+        given:
+        Book book = new Book()
 
         // e
-        book.prefixTitle("blub");
+        expect:
+        book.prefixTitle("blub")
     }
 
     /** replace only if it is just one loop at the end */
-    @Test
-    public void assertionInLoop() {
-        Book first = new Book();
-        first.setPages(10);
 
-        Book second = new Book();
-        second.setPages(10);
+    def "assertion in loop"() {
+        given:
+        Book first = new Book()
+        first.pages = 10
 
-        final List<Book> books = Arrays.asList(first, second);
+        Book second = new Book()
+        second.pages = 10
+
+        final List<Book> books = Arrays.asList(first, second)
 
         // where
+        expect:
         for (Book bookToTest : books) {
             // then
-            assertEquals((Integer)10, bookToTest.getPages());
-            assertNull(bookToTest.getTitle());
+            assertEquals((Integer)10, bookToTest.pages)
+            assertNull(bookToTest.title)
         }
     }
 
-    @Test
-    public void similarAssertsToDataDriven() {
-        assertEquals("pre title1", createBook("title1").prefixTitle("pre"));
-        assertEquals(" title2", createBook("title2").prefixTitle(""));
-        assertEquals("prefix title3", createBook("title3").prefixTitle("prefix"));
+
+    def "similar asserts to data driven"() {
+        expect:
+        createBook("title1").prefixTitle("pre") == "pre title1"
+        createBook("title2").prefixTitle("") == " title2"
+        createBook("title3").prefixTitle("prefix") == "prefix title3"
     }
 
     private Book createBook(String title) {
-        final Book book = new Book();
-        book.setTitle(title);
-        return book;
+        final Book book = new Book()
+        book.title = title
+        return book
     }
 
     private void assertDoesNotExist() {
