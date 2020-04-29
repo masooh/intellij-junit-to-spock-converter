@@ -22,6 +22,7 @@ sonarqube {
 intellij {
     pluginName = "JUnit to Spock Converter"
     version = "2019.3.3" // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
+    // transitive dependencies has to added: https://github.com/JetBrains/gradle-intellij-plugin/issues/38
     setPlugins("Groovy", "java", "properties") // Bundled plugin dependencies
     updateSinceUntilBuild = false
 }
