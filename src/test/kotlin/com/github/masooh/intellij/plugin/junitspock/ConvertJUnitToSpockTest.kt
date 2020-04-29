@@ -2,7 +2,6 @@ package com.github.masooh.intellij.plugin.groovyfier
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-//class ConvertJavaToGroovyTest2 : LightJavaCodeInsightFixtureTestCase() {
 class ConvertJavaToGroovyTest : LightJavaCodeInsightFixtureTestCase() {
 
     override fun getTestDataPath() = "src/test/resources/testdata"

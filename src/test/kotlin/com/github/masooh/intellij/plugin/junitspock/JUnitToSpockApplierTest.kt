@@ -7,7 +7,6 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
-//class ConvertJavaToGroovyTest2 : LightJavaCodeInsightFixtureTestCase() {
 class JUnitToSpockApplierTest : LightJavaCodeInsightFixtureTestCase() {
 
     override fun getTestDataPath() = "src/test/resources/testdata"
@@ -16,7 +15,6 @@ class JUnitToSpockApplierTest : LightJavaCodeInsightFixtureTestCase() {
         // copies from #getTestDataPath to test project and opens in editor
         val psiFile = myFixture.configureByFile("BookTest.groovy") as GroovyFile
 
-        // todo psiFile is not recognized as Groovy but Plain Text, Groovy is not in list of FileType type = myPatternsTable.findAssociatedFileType(fileName);
 //        myFixture.testAction(ConvertJavaToGroovy())
         testAction(ConvertJavaToGroovy(), psiFile)
 
