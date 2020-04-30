@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     idea
-    id("org.jetbrains.intellij") version "0.4.16" // https://github.com/JetBrains/gradle-intellij-plugin
+    id("org.jetbrains.intellij") version "0.4.18" // https://github.com/JetBrains/gradle-intellij-plugin
     kotlin("jvm") version "1.3.31"
     id("org.sonarqube") version "2.8"
 }
@@ -24,6 +24,7 @@ intellij {
 //    version = "191.6183.87" // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
     version = "2019.3.3" // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
     setPlugins("Groovy", "java") // Bundled plugin dependencies
+    updateSinceUntilBuild = false
 }
 
 tasks.withType<PublishTask> {
@@ -33,7 +34,7 @@ tasks.withType<PublishTask> {
 }
 
 group = "com.github.masooh.intellij.plugin.groovyfier"
-version = "0.1" // overrides plugin.xml version in case of conflict
+version = "0.1.1" // overrides plugin.xml version in case of conflict
 
 repositories {
     mavenCentral()

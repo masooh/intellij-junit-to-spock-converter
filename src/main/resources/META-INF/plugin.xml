@@ -25,12 +25,15 @@
     <vendor url="https://github.com/masooh">masooh</vendor>
 
     <change-notes><![CDATA[
-    Initial version. Simple features can be replaced.
+    <h3>0.1.1</h3>
+    <p>Set <code>until-build="201.*"</code> to support IntelliJ 2020.</p>
+    <h3>0.1</h3>
+    <p>Initial version. Simple features can be replaced.</p>
     ]]>
     </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="2019.3.3"/> <!-- is overriden by gradle -->
+    <idea-version since-build="193.6494" until-build="201.*" /> <!-- is overriden by gradle -->
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->¶
