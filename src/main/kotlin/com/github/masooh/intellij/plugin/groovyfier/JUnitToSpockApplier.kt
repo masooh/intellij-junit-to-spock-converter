@@ -34,25 +34,20 @@ enum class Block {
         get() = this.name.toLowerCase()
 }
 
-class JUnitToSpockApplier(event: AnActionEvent) {
+class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
     companion object {
         private val log = Logger.getInstance(JUnitToSpockApplier::class.java)
     }
 
     private val project: Project = event.project!!
-    private val psiFile: PsiFile = event.getRequiredData(PlatformDataKeys.PSI_FILE)
     private val editor: Editor = event.getRequiredData(PlatformDataKeys.EDITOR)
-    private val typeDefinition: GrTypeDefinition
+    private val typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
 
     private val groovyFactory
         get() = GroovyPsiElementFactory.getInstance(project)
 
     private val javaFactory
         get() = JavaPsiFacade.getInstance(project).elementFactory
-
-    init {
-        typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
-    }
 
     fun transformToSpock() {
         // spock has it's own runner
@@ -100,7 +95,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                     }
                 }
 
-                method.changeMethodNameTo("\"" + camelToSpace(method.name) + "\"")
+                method.changeMethodNameTo("\"${method.name.camelToSpace()}\"")
                         .voidReturnToDef()
 
                 changeFeatureBody(method, exceptionClass)
@@ -136,7 +131,7 @@ class JUnitToSpockApplier(event: AnActionEvent) {
         val annotation = annotationName.asSequence().mapNotNull { PsiImplUtil.getAnnotation(method, it) }.firstOrNull()
 
         if (annotation != null) {
-            // todo macht es Sinn für jede Methode extra Write action?
+            // todo should I use an extra WriteCommandAction for each change?
             WriteCommandAction.runWriteCommandAction(project) {
                 changeInMethod(annotation)
                 annotation.delete()
@@ -162,10 +157,10 @@ class JUnitToSpockApplier(event: AnActionEvent) {
                         else -> {
                             val nextStatement = statements.getOrNull(idx + 1)
                             when {
+                                // -> method has only single statement
                                 nextStatement == null -> {
                                     when {
                                         exceptionClass != null -> addLabelToStatement(WHEN, statement)
-                                        // -> method has only single statement
                                         else -> addLabelToStatement(EXPECT, statement)
                                     }
                                 }
@@ -377,12 +372,12 @@ class JUnitToSpockApplier(event: AnActionEvent) {
             }, psiFile)
         }
     }
-
-
-    private fun camelToSpace(string: String): String {
-        return StringUtil.join(GroovyNamesUtil.camelizeString(string), { StringUtil.decapitalize(it) }, " ")
-    }
 }
+
+private fun String.camelToSpace(): String {
+    return StringUtil.join(GroovyNamesUtil.camelizeString(this), { StringUtil.decapitalize(it) }, " ")
+}
+
 
 private fun GrStatement.isAssertion(): Boolean {
     return if (this is GrMethodCallExpression) {

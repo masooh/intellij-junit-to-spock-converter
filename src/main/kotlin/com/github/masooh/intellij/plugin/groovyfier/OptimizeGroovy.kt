@@ -12,14 +12,10 @@ import org.jetbrains.plugins.groovy.GroovyFileType
 class OptimizeGroovy : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
-        val currentFile = requireNotNull(event.getData(PlatformDataKeys.VIRTUAL_FILE))
-
-        if ("groovy" != currentFile.extension) {
-            return
-        }
+        val psiFile = requireNotNull(event.getData(PlatformDataKeys.PSI_FILE))
 
         // TODO why must this be the first action otherwise exception
-        GroovyFixesApplier.applyGroovyFixes(event)
+        GroovyFixesApplier.applyGroovyFixes(event, psiFile)
 
         /* TODO Groovy array handling
             List<IdentAttachmentMetaData> documents = new ArrayList<>()
@@ -34,10 +30,8 @@ class OptimizeGroovy : AnAction() {
 
     override fun update(event: AnActionEvent) {
         val file = event.getData(PlatformDataKeys.PSI_FILE)
-        val editor = event.getData(PlatformDataKeys.EDITOR)
 
         val enabled = file != null &&
-                editor != null &&
                 file.fileType in GroovyFileType.getGroovyEnabledFileTypes()
 
         event.presentation.isEnabled = enabled

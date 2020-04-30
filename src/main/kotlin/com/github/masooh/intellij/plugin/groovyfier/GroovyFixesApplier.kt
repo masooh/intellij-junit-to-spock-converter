@@ -17,22 +17,21 @@ import com.intellij.psi.PsiFile
 import java.util.*
 
 object GroovyFixesApplier {
-    fun applyGroovyFixes(event: AnActionEvent) {
+    fun applyGroovyFixes(event: AnActionEvent, psiFile: PsiFile) {
         val project = event.project ?: return
-        val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
 
         val groovyInspections = findGroovyInspections()
 
-        if (!groovyInspections.isEmpty()) {
+        if (groovyInspections.isNotEmpty()) {
             // inspired by CleanupInspectionIntention
-            val problemDescriptors = inspectFileForProblems(project, file, groovyInspections)
+            val problemDescriptors = inspectFileForProblems(project, psiFile, groovyInspections)
 
             if (problemDescriptors.isEmpty()) {
                 return
             }
 
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) {
+            if (!FileModificationService.getInstance().preparePsiElementForWrite(psiFile)) {
                 HintManager.getInstance().showErrorHint(editor, "Cannot write PSI element.")
                 return
             }
@@ -62,11 +61,14 @@ object GroovyFixesApplier {
         val inspectionToolWrappers = InspectionToolRegistrar.getInstance().createTools()
         return inspectionToolWrappers
                 .asSequence()
-                .filter { inspectionToolWrapper -> inspectionToolWrapper.language != null && inspectionToolWrapper.language!!.equals("groovy", ignoreCase = true) }
-                .filter { wrapper -> wrapper.groupDisplayName.equals("GPath", ignoreCase = true) || wrapper.groupDisplayName.equals("Style", ignoreCase = true) }
-                .filter { wrapper -> wrapper.id != "ChangeToMethod" } // this is not groovy style
-                .filter { wrapper -> wrapper is LocalInspectionToolWrapper }
-                .map { wrapper -> wrapper as LocalInspectionToolWrapper }
+                .filter {
+                    val language = it.language
+                    language != null && language.equals("groovy", ignoreCase = true)
+                }
+                .filter { it.groupDisplayName.equals("GPath", ignoreCase = true) || it.groupDisplayName.equals("Style", ignoreCase = true) }
+                .filter { it.id != "ChangeToMethod" } // this is not groovy style
+                .filter { it is LocalInspectionToolWrapper }
+                .map { it as LocalInspectionToolWrapper }
                 .toList()
     }
 }
