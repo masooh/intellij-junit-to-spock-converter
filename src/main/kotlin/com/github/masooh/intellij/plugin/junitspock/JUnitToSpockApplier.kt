@@ -1,6 +1,6 @@
-package com.github.masooh.intellij.plugin.groovyfier
+package com.github.masooh.intellij.plugin.junitspock
 
-import com.github.masooh.intellij.plugin.groovyfier.Block.*
+import com.github.masooh.intellij.plugin.junitspock.Block.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction

@@ -1,9 +1,9 @@
-package com.github.masooh.intellij.plugin.groovyfier.action
+package com.github.masooh.intellij.plugin.junitspock.action
 
-import com.github.masooh.intellij.plugin.groovyfier.GroovyFixesApplier
-import com.github.masooh.intellij.plugin.groovyfier.JUnitToSpockApplier
-import com.github.masooh.intellij.plugin.groovyfier.JavaToGroovyFileHelper
-import com.github.masooh.intellij.plugin.groovyfier.getPsiClass
+import com.github.masooh.intellij.plugin.junitspock.GroovyFixesApplier
+import com.github.masooh.intellij.plugin.junitspock.JUnitToSpockApplier
+import com.github.masooh.intellij.plugin.junitspock.JavaToGroovyFileHelper
+import com.github.masooh.intellij.plugin.junitspock.getPsiClass
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

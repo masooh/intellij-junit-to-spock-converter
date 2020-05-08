@@ -1,4 +1,4 @@
-package com.github.masooh.intellij.plugin.groovyfier
+package com.github.masooh.intellij.plugin.junitspock
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger

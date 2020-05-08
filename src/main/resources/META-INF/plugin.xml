@@ -1,6 +1,6 @@
 <idea-plugin>
-    <id>com.github.masooh.intellij.plugin.groovyfier</id>
-    <name>Groovyfier</name>
+    <id>com.github.masooh.intellij.plugin.junitspock</id>
+    <name>JUnit to Spock Converter</name>
     <version>OVERRIDEN-BY-GRADLE</version>
 
     <description><![CDATA[
@@ -56,13 +56,13 @@
     </extensions>
 
     <actions>
-        <action id="JavaToGroovy.ConvertJUnit" class="com.github.masooh.intellij.plugin.groovyfier.action.ConvertJUnitToSpock"
+        <action id="JUnitToSpockConverter.ConvertJUnit" class="com.github.masooh.intellij.plugin.junitspock.action.ConvertJUnitToSpock"
                 text="Convert JUnit to Spock"
                 description="Converts the current JUnit test to a Spock specification">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
 
-        <action id="JavaToGroovy.ConvertJava" class="com.github.masooh.intellij.plugin.groovyfier.action.ConvertJavaToGroovy"
+        <action id="JUnitToSpockConverter.ConvertJava" class="com.github.masooh.intellij.plugin.junitspock.action.ConvertJavaToGroovy"
                 text="Convert Java to Groovy"
                 description="Converts the current Java file to Groovy">
             <add-to-group group-id="CodeMenu" anchor="last"/>

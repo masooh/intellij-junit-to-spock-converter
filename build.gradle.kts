@@ -33,7 +33,7 @@ tasks.withType<PublishTask> {
     }
 }
 
-group = "com.github.masooh.intellij.plugin.groovyfier"
+group = "com.github.masooh.intellij.plugin.junitspock"
 version = "0.1.1" // overrides plugin.xml version in case of conflict
 
 repositories {

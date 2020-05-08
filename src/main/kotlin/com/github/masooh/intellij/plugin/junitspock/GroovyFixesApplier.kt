@@ -1,4 +1,4 @@
-package com.github.masooh.intellij.plugin.groovyfier
+package com.github.masooh.intellij.plugin.junitspock
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.hint.HintManager

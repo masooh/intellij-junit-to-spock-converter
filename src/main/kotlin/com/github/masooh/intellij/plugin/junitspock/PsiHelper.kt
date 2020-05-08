@@ -1,4 +1,4 @@
-package com.github.masooh.intellij.plugin.groovyfier
+package com.github.masooh.intellij.plugin.junitspock
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.*
@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
-private val LOG = Logger.getInstance("groovyfier.PsiHelper")
+private val LOG = Logger.getInstance("junitspock.PsiHelper")
 
 data class Range(val parent: PsiElement, val first: PsiElement, val last: PsiElement)
 

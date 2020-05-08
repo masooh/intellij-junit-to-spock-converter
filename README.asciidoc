@@ -1,4 +1,4 @@
-= Groovyfier
+= JUnit to Spock Converter
 
 image::https://dev.azure.com/melius-coder/Groovyfier/_apis/build/status/masooh.groovyfier?branchName=master[Build Status, link=https://dev.azure.com/melius-coder/Groovyfier/_build/latest?definitionId=1&branchName=master]
 
