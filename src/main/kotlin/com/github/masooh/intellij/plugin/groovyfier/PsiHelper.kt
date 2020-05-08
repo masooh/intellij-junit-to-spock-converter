@@ -9,6 +9,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
+private val LOG = Logger.getInstance("groovyfier.PsiHelper")
+
 data class Range(val parent: PsiElement, val first: PsiElement, val last: PsiElement)
 
 fun GrMethod.voidReturnToDef() {
@@ -85,5 +87,3 @@ fun GrArgumentList.withArgs(one: ((GrExpression) -> GrExpression)? = null,
         else -> null
     }
 }
-
-val LOG = Logger.getInstance("groovyfier.PsiHelper")

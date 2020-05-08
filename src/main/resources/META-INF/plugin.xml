@@ -4,27 +4,38 @@
     <version>OVERRIDEN-BY-GRADLE</version>
 
     <description><![CDATA[
-        Converts a Java class to a Groovy class.<br/>
-        New action: Code -> Convert Java To Groovy.<br/>
-        Focused on converting JUnit tests to Spock specs.<br/>
-        <br/>
-        <b>Features:</b><br/>
-        <br/>
+        <p>Converts JUnit tests to Spock specifications. Can also convert Java files to Groovy.</p>
+        <p>
+            New actions: Code -> "Convert JUnit to Spock"/"Convert Java to Groovy".<br/>
+        </p>
+
+        <h3>Features:</h3>
         <ul>
-            <li>Convert Java class to Spock spec</li>
-            <li>Replace <code>@Before/@BeforeClass and @After/@AfterClass</code></li>
+            <li>Convert JUnit test to Spock specifications</li>
+            <li>Replace test annotations i.e. <code>@Before, @Test, ...</code></li>
+            <li>Convert test names <code>camelCaseNaming()</code> to <code>"camel case naming"()</code></li>
             <li>Guess when/then/expect blocks</li>
             <li>Replace simple asserts(<code>assertEquals, assertTrue, assertNull</code>) and the according negated ones</li>
         </ul>
-        <br/>
-        <b>Limitations:</b><br/>
-        This plugin has limitations in converting Java to Groovy as well as the replacement of JUnit features, nonetheless
-        it serves as a good start for the conversion.
+
+        <h3>Limitations:</h3>
+        <p>
+            This plugin has limitations in converting Java to Groovy as well as the replacement of JUnit features, nonetheless
+            it serves as a good start for the conversion.
+        </p>
+
+        <p>
+            For a complete set of features see the documentation.
+        </p>
         ]]>
     </description>
     <vendor url="https://github.com/masooh">masooh</vendor>
 
     <change-notes><![CDATA[
+    <h3>0.2</h3>
+    <ul>
+        <li>Offer two actions: "Convert JUnit to Spock" and "Convert Java to Groovy"</li>
+    </ul>
     <h3>0.1.1</h3>
     <p>Set <code>until-build="201.*"</code> to support IntelliJ 2020.</p>
     <h3>0.1</h3>
@@ -45,9 +56,14 @@
     </extensions>
 
     <actions>
-        <!-- Add your actions here -->
-        <action id="JavaToGroovy.Convert" class="com.github.masooh.intellij.plugin.groovyfier.ConvertJavaToGroovy"
-                text="Convert Java To Groovy"
+        <action id="JavaToGroovy.ConvertJUnit" class="com.github.masooh.intellij.plugin.groovyfier.action.ConvertJUnitToSpock"
+                text="Convert JUnit to Spock"
+                description="Converts the current JUnit test to a Spock specification">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+
+        <action id="JavaToGroovy.ConvertJava" class="com.github.masooh.intellij.plugin.groovyfier.action.ConvertJavaToGroovy"
+                text="Convert Java to Groovy"
                 description="Converts the current Java file to Groovy">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
