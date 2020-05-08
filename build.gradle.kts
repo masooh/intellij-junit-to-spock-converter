@@ -20,7 +20,7 @@ sonarqube {
 }
 
 intellij {
-    pluginName = "Groovyfier"
+    pluginName = "JUnit to Spock Converter"
 //    version = "191.6183.87" // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
     version = "2019.3.3" // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
     setPlugins("Groovy", "java") // Bundled plugin dependencies

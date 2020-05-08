@@ -51,7 +51,7 @@ object JavaToGroovyFileHelper {
             }
 
             val yesNo = Messages
-                    .showYesNoDialog(project, "Groovy source root is not present, do you want to create it?", "Groovyfier", Messages
+                    .showYesNoDialog(project, "Groovy source root is not present, do you want to create it?", "JUnit to Spock Converter", Messages
                             .getQuestionIcon())
             if (yesNo == Messages.NO) {
                 return null

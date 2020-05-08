@@ -4,7 +4,7 @@ image::https://dev.azure.com/melius-coder/Groovyfier/_apis/build/status/masooh.g
 
 image::https://sonarcloud.io/api/project_badges/measure?project=masooh_groovyfier&metric=ncloc[Lines of Code, link=https://sonarcloud.io/dashboard?id=masooh_groovyfier]
 
-Groovyfier is a plug-in for IntelliJ IDEA: https://plugins.jetbrains.com/plugin/12335-groovyfier.
+JUnit to Spock Converter is a plug-in for IntelliJ IDEA: https://plugins.jetbrains.com/plugin/12335-groovyfier.
 
 It's inspired by https://github.com/opaluchlukasz/junit2spock[junit2spock] and has the same goal: Facilitate the transition from JUnit to Spock. The advantage compared to the command line tool is the integration in the IDE.
 The project is in an early stage and has at the moment only a subset of the features of
@@ -151,7 +151,7 @@ The following is not (yet) possible:
 == Roadmap
 
 - Documentation
-** Commit converted test to show what works and what not: https://github.com/masooh/groovyfier/blob/master/src/ide-test/java-groovy-sample/src/test/java/junit4/BookTest.java[BookTest]
+** Commit converted test to show what works and what not: https://github.com/masooh/intellij-junit-to-spock-converter/blob/master/src/ide-test/java-groovy-sample/src/test/java/junit4/BookTest.java[BookTest]
 ** Plugin description with small video like IntelliJ new features
 - Quality
 ** Unit Tests for plugin itself
