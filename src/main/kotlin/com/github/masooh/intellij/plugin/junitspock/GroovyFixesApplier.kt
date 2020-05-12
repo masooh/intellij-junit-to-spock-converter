@@ -58,6 +58,28 @@ object GroovyFixesApplier {
     }
 
     private fun findGroovyInspections(): List<LocalInspectionToolWrapper> {
+
+        /**
+         *
+         * Inspection vs Intention. How can I find the intentions and apply them?, do I need two mechanism for applying
+         *
+         * Expression conversions
+
+        Convert Indexing Method To [] Form
+        Convert JUnit assertion to assert statement
+        Convert Java-Style Array Creation to Groovy Syntax
+        Convert String Concatenation to GString
+
+        Groovy-style
+
+        Remove redundant .class
+
+
+
+        Groovy Intentions
+
+        src/META-INF/groovy-intentions.xml
+         */
         val inspectionToolWrappers = InspectionToolRegistrar.getInstance().createTools()
         return inspectionToolWrappers
                 .asSequence()
