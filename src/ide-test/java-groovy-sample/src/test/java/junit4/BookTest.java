@@ -14,6 +14,9 @@ import java.util.List;
 import sample.Book;
 
 public class BookTest {
+    private String[] emptyArray = new String[] {};
+    private String[] stringArray = new String[] { "4", "5" };
+    private byte[] byteArray = new byte[] { 'F', 'T' };
 
     private Book book = new Book();
 
