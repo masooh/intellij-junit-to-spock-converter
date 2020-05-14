@@ -5,8 +5,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     idea
-    id("org.jetbrains.intellij") version "0.4.18" // https://github.com/JetBrains/gradle-intellij-plugin
-    kotlin("jvm") version "1.3.31"
+    id("org.jetbrains.intellij") version "0.4.21" // https://github.com/JetBrains/gradle-intellij-plugin
+    kotlin("jvm") version "1.3.70"
     id("org.sonarqube") version "2.8"
 }
 
