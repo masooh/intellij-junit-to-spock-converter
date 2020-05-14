@@ -34,7 +34,7 @@ class ConvertJavaToGroovy : AnAction() {
         val project = requireNotNull(event.project)
         val currentFile = event.getRequiredData(PlatformDataKeys.VIRTUAL_FILE)
 
-        JavaToGroovyFileHelper.createGroovyRootAndMoveFile(project, currentFile) { project, groovyPsiFile ->
+        JavaToGroovyFileHelper.createGroovyRootAndMoveFile(project, currentFile) { groovyPsiFile ->
             // TODO why must this be the first action otherwise exception
             GroovyFixesApplier.applyGroovyFixes(event, groovyPsiFile)
 

@@ -41,7 +41,7 @@ class ConvertJUnitToSpock : AnAction() {
         val project = requireNotNull(event.project)
         val currentFile = event.getRequiredData(PlatformDataKeys.VIRTUAL_FILE)
 
-        JavaToGroovyFileHelper.createGroovyRootAndMoveFile(project, currentFile) { project, groovyPsiFile ->
+        JavaToGroovyFileHelper.createGroovyRootAndMoveFile(project, currentFile) { groovyPsiFile ->
             replaceCurlyBracesInAnnotationAttributes(groovyPsiFile, project)
 
             GroovyFixesApplier.applyGroovyFixes(event, groovyPsiFile)

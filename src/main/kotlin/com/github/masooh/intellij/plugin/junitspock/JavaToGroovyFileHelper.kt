@@ -20,7 +20,7 @@ object JavaToGroovyFileHelper {
     private val LOG = Logger.getInstance(JavaToGroovyFileHelper::class.java)
 
     fun createGroovyRootAndMoveFile(project: Project, currentFile: VirtualFile,
-                                    postGroovyRootCreationActions: (Project, PsiFile) -> Unit) {
+                                    postGroovyRootCreationActions: (PsiFile) -> Unit) {
         val groovySourceRoot = createGroovySourceRoot(project, currentFile)
 
         if (groovySourceRoot != null) {
@@ -32,7 +32,7 @@ object JavaToGroovyFileHelper {
                 // old PSI is wrong as moved and renamed
                 val groovyPsiFile = requireNotNull(PsiManager.getInstance(project).findFile(currentFile))
 
-                postGroovyRootCreationActions(project, groovyPsiFile)
+                postGroovyRootCreationActions(groovyPsiFile)
             }
 
             // no action must occur here
