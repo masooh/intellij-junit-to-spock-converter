@@ -10,16 +10,65 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.plugins.groovy.intentions.base.Intention
+import org.jetbrains.plugins.groovy.intentions.conversions.ConvertJavaStyleArrayIntention
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import java.util.*
 
 object GroovyFixesApplier {
     fun applyGroovyFixes(event: AnActionEvent, psiFile: PsiFile) {
         val project = event.project ?: return
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            val intentionInvoker = IntentionInvoker(project, psiFile, editor)
+
+            // new String[] { "4", "5" } -> ["4", "5"]
+            intentionInvoker.findChildrenOfTypeAndInvokeIntention(
+                    GrNewExpression::class.java,
+                    ConvertJavaStyleArrayIntention()
+            )
+
+            /*
+                "starting " + BookTest.class.getSimpleName() -> "starting ${BookTest.class.simpleName}"
+
+                 must be executed before property style is active, otherwise "text ${"sdkjfl".getBytes()}"
+                 is replaced with "text $"sdkjfl".bytes"
+             */
+            intentionInvoker.findChildrenOfTypeAndInvokeIntention(
+                    GrBinaryExpression::class.java,
+                    ConvertConcatenationToGstringIntention()
+            )
+
+            // TODO call remaining intentions
+            /**
+             * Expression conversions
+
+            Convert Indexing Method To [] Form
+            Convert JUnit assertion to assert statement
+            Convert Java-Style Array Creation to Groovy Syntax
+            Convert String Concatenation to GString
+
+            Groovy-style
+
+            Remove redundant .class
+
+            Groovy Intentions
+
+            src/META-INF/groovy-intentions.xml
+             */
+        }
+
 
         val groovyInspections = findGroovyInspections()
 
@@ -44,6 +93,7 @@ object GroovyFixesApplier {
         }
     }
 
+
     private fun inspectFileForProblems(project: Project, file: PsiFile, groovyInspections: List<LocalInspectionToolWrapper>): List<ProblemDescriptor> {
         val problemDescriptors = ProgressManager.getInstance().runProcess<Map<String, List<ProblemDescriptor>>>({
             val inspectionManager = InspectionManager.getInstance(project)
@@ -58,28 +108,6 @@ object GroovyFixesApplier {
     }
 
     private fun findGroovyInspections(): List<LocalInspectionToolWrapper> {
-
-        /**
-         *
-         * Inspection vs Intention. How can I find the intentions and apply them?, do I need two mechanism for applying
-         *
-         * Expression conversions
-
-        Convert Indexing Method To [] Form
-        Convert JUnit assertion to assert statement
-        Convert Java-Style Array Creation to Groovy Syntax
-        Convert String Concatenation to GString
-
-        Groovy-style
-
-        Remove redundant .class
-
-
-
-        Groovy Intentions
-
-        src/META-INF/groovy-intentions.xml
-         */
         val inspectionToolWrappers = InspectionToolRegistrar.getInstance().createTools()
         return inspectionToolWrappers
                 .asSequence()

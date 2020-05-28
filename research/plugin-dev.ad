@@ -127,3 +127,35 @@ durch `registerMethodCallError` wird Fehler festgehalten -> weitere `register*` 
 Fix durch `GroovyFix` mit `doFix()` was dann `replaceExpression` aufruft
 
 
+== Intentions
+
+- link:https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/code_inspections_and_intentions.html[Code Inspections and Intentions / IntelliJ Platform SDK DevGuide]
+- link:https://www.jetbrains.org/intellij/sdk/docs/tutorials/code_intentions.html[Code Intentions / IntelliJ Platform SDK DevGuide]
+
+[source,java]
+----
+// com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
+for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
+    action.isAvailable(project, editor, psiFile)
+}
+
+// org.jetbrains.plugins.groovy.intentions.base.Intention
+// checks element at and before caret
+final int position = editor.getCaretModel().getOffset();
+PsiElement element = file.findElementAt(position);
+while (element != null) {
+  if (predicate.satisfiedBy(element)) return element;
+  if (isStopElement(element)) break;
+  element = element.getParent();
+}
+----
+
+
+
+=== ConvertJavaStyleArrayIntention
+
+Description, before/after template is located in `plugins/groovy/groovy-psi/resources/intentionDescriptions/ConvertJavaStyleArrayIntention`
+
+`plugins/groovy/src/org/jetbrains/plugins/groovy/intentions/conversions/ConvertJavaStyleArrayIntention.kt`
+
+

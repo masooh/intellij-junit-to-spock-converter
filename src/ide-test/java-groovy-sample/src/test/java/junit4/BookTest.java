@@ -1,17 +1,12 @@
 package junit4;
 
 import org.junit.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import sample.Book;
 
 import java.util.Arrays;
 import java.util.List;
 
-import sample.Book;
+import static org.junit.Assert.*;
 
 public class BookTest {
     private String[] emptyArray = new String[] {};
@@ -22,7 +17,7 @@ public class BookTest {
 
     @BeforeClass
     public static void beforeClass() {
-        System.out.println("starting book test");
+        System.out.println("starting " + BookTest.class.getSimpleName());
     }
 
     @AfterClass
