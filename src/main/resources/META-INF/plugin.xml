@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.github.masooh.intellij.plugin.junitspock</id>
+    <id>com.github.masooh.intellij.plugin.groovyfier</id>
     <name>JUnit to Spock Converter</name>
     <version>OVERRIDEN-BY-GRADLE</version>
 
@@ -34,7 +34,9 @@
     <change-notes><![CDATA[
     <h3>0.2</h3>
     <ul>
+        <li>Rename Groovyfier to "JUnit to Spock Converter"</li>
         <li>Offer two actions: "Convert JUnit to Spock" and "Convert Java to Groovy"</li>
+        <li>Support IntelliJ 2020.2</li>
     </ul>
     <h3>0.1.1</h3>
     <p>Set <code>until-build="201.*"</code> to support IntelliJ 2020.</p>
@@ -44,7 +46,7 @@
     </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="193.6494" until-build="201.*" /> <!-- is overriden by gradle -->
+    <idea-version since-build="193.6494"  />
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->¶
