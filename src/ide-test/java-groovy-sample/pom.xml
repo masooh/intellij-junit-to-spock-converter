@@ -16,6 +16,8 @@
         <junit.version>4.12</junit.version>
         <junit.jupiter.version>5.4.1</junit.jupiter.version>
         <junit.vintage.version>5.4.1</junit.vintage.version>
+        <spring.version>5.2.8.RELEASE</spring.version>
+        <spock.version>1.2-groovy-2.4</spock.version>
     </properties>
 
     <description>
@@ -62,7 +64,13 @@
                 <dependency>
                     <groupId>org.spockframework</groupId>
                     <artifactId>spock-core</artifactId>
-                    <version>1.2-groovy-2.4</version>
+                    <version>${spock.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.spockframework</groupId>
+                    <artifactId>spock-spring</artifactId>
+                    <version>${spock.version}</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -70,6 +78,13 @@
     </profiles>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -86,11 +101,19 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
             <version>${junit.vintage.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
