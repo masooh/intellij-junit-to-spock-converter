@@ -50,8 +50,10 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
         get() = JavaPsiFacade.getInstance(project).elementFactory
 
     fun transformToSpock() {
-        // spock has it's own runner
-        typeDefinition.getAnnotation("org.junit.runner.RunWith")?.delete()
+        WriteCommandAction.runWriteCommandAction(project, null, null, Runnable {
+            // spock has it's own runner
+            typeDefinition.getAnnotation("org.junit.runner.RunWith")?.delete()
+        }, psiFile)
 
         extendSpecification()
         changeMethods()
