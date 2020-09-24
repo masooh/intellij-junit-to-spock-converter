@@ -183,7 +183,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
                 }
                 EXPECT -> {
                     log.info("expect:")
-                    val block = handleExpectAndThen(statement)
+                    val block = handleExpectAndThen(statement, statements.getOrNull(idx + 1))
                     if (block != null) {
                         currentBlock = block
                     }
@@ -200,7 +200,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
                 }
                 THEN -> {
                     log.info("then:")
-                    val block = handleExpectAndThen(statement)
+                    val block = handleExpectAndThen(statement, statements.getOrNull(idx + 1))
                     if (block != null) {
                         currentBlock = block
                     }
@@ -209,7 +209,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
         }
 
         if (exceptionClass != null) {
-            val statement = "then: thrown(${exceptionClass.qualifierExpression!!.text})"
+            val statement = "then: thrown(${exceptionClass.qualifiedReferenceName})"
             val thrownBlock = createStatementFromText<GrLabeledStatement>(statement)
 
             // add would insert statement after closing }
@@ -218,13 +218,20 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
 
     }
 
-    private fun handleExpectAndThen(statement: GrStatement): Block? {
+    private fun handleExpectAndThen(statement: GrStatement, nextStatement: GrStatement?): Block? {
         return when {
             statement.isAssertion() -> {
                 replaceWithSpockAssert(statement as GrMethodCallExpression)
                 null // stay in block
             }
-            statement is GrVariableDeclaration -> {
+            /**
+             *  then:
+             *  ...
+             *  Book otherBook = new Book() // this must be placed in next when block
+             *  when:
+             *  otherBook.pages = 22
+             */
+            statement is GrVariableDeclaration && (nextStatement == null || nextStatement.isAssertion()) -> {
                 null // stay in block
             }
             else -> {

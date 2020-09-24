@@ -91,10 +91,11 @@ public class BookTest {
         assertEquals(34, pages);
 
         // w
-        bookToTest.setPages(22);
+        Book otherBook = new Book();
+        otherBook.setPages(22);
 
         // t
-        assertEquals((Integer) 22, bookToTest.getPages());
+        assertEquals((Integer) 22, otherBook.getPages());
     }
 
     @Test
