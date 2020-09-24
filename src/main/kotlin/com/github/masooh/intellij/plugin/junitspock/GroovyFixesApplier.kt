@@ -11,18 +11,16 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertJavaStyleArrayIntention
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.intentions.style.RemoveRedundantClassPropertyIntention
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import java.util.*
 
 object GroovyFixesApplier {
@@ -31,15 +29,21 @@ object GroovyFixesApplier {
         val editor = event.getRequiredData(CommonDataKeys.EDITOR)
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val intentionInvoker = IntentionInvoker(project, psiFile, editor)
+            val intentionInvoker = IntentionInvoker(project, psiFile, editor);
 
-            // new String[] { "4", "5" } -> ["4", "5"]
+            /*
+                List of Groovy Intention classes can be found here:
+                src/META-INF/groovy-intentions.xml
+             */
+
+            // Convert String Concatenation to GString: new String[] { "4", "5" } -> ["4", "5"]
             intentionInvoker.findChildrenOfTypeAndInvokeIntention(
                     GrNewExpression::class.java,
                     ConvertJavaStyleArrayIntention()
             )
 
-            /*
+            /* Convert String Concatenation to GString
+            ------------------------------------------
                 "starting " + BookTest.class.getSimpleName() -> "starting ${BookTest.class.simpleName}"
 
                  must be executed before property style is active, otherwise "text ${"sdkjfl".getBytes()}"
@@ -50,25 +54,15 @@ object GroovyFixesApplier {
                     ConvertConcatenationToGstringIntention()
             )
 
-            // TODO call remaining intentions
-            /**
-             * Expression conversions
+            //  Remove redundant .class
+            intentionInvoker.findChildrenOfTypeAndInvokeIntention(
+                    GrReferenceExpression::class.java,
+                    RemoveRedundantClassPropertyIntention()
+            )
 
-            Convert Indexing Method To [] Form
-            Convert JUnit assertion to assert statement
-            Convert Java-Style Array Creation to Groovy Syntax
-            Convert String Concatenation to GString
-
-            Groovy-style
-
-            Remove redundant .class
-
-            Groovy Intentions
-
-            src/META-INF/groovy-intentions.xml
-             */
+             // Convert Indexing Method To [] Form -> done by GPath Inspection
+            // Convert JUnit assertion to assert statement -> done manually, does not work for Spock, see ConvertJunitAssertionToAssertStatementIntention
         }
-
 
         val groovyInspections = findGroovyInspections()
 
