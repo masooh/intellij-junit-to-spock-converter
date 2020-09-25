@@ -11,8 +11,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.util.elementType
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
@@ -129,6 +132,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
     private fun changeMethodHavingAnnotation(method: GrMethod, vararg annotationName: String,
                                              changeInMethod: (PsiAnnotation) -> Unit) {
 
+        log.info("Change method: ${method.name}")
 
         val annotation = annotationName.asSequence().mapNotNull { PsiImplUtil.getAnnotation(method, it) }.firstOrNull()
 
@@ -137,6 +141,16 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
             WriteCommandAction.runWriteCommandAction(project) {
                 changeInMethod(annotation)
                 annotation.delete()
+                if (method.prevSibling is PsiWhiteSpace) {
+                    method.prevSibling.delete()
+                }
+                if (method.prevSibling.elementType == GroovyElementTypes.NL) {
+                    // todo count \n\n and remove one
+                    method.prevSibling.replaceElement(
+                            groovyFactory.createLineTerminator(/* n - 1 */)
+                    )
+
+                }
                 method.voidReturnToDef()
             }
         }
