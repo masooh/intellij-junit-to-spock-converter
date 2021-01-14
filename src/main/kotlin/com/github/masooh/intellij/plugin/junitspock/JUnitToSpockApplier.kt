@@ -13,6 +13,7 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
+import org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
@@ -24,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 
@@ -58,6 +60,8 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
         extendSpecification()
         changeMethods()
 
+        postTransformationIntentions()
+
         // TODO add spock to dependencies if not present
         // TODO falls Test src/test/groovy anlegt bricht Umwandlung um: PSI and index do not match
 
@@ -68,6 +72,20 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
             nicht tester.lastRenderedPage.add(checkEventBehavior) oder tester.executeAjaxEvent(NEXT_STEP_LINK_PATH, "onclick")
          */
         optimizeImports()
+    }
+
+    private fun postTransformationIntentions() {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val intentionInvoker = IntentionInvoker(project, psiFile, editor)
+
+            // Hamcrest - remove parentheses for expect/that
+            intentionInvoker.findChildrenOfTypeAndInvokeIntention(
+                    GrMethodCallExpression::class.java,
+                    RemoveParenthesesFromMethodCallIntention()
+            ) { psi ->
+                psi.firstChild.textMatches("that") || psi.firstChild.textMatches("expect")
+            }
+        }
     }
 
     private fun optimizeImports() {
@@ -153,7 +171,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
                     log.info("null:")
                     currentBlock = when {
                         statement.isAssertion() -> {
-                            val replacedStatement = replaceWithSpockAssert(statement as GrMethodCallExpression)
+                            val replacedStatement = replaceWithSpockAssert(statement as GrMethodCallExpression, "that")
                             addLabelToStatement(EXPECT, replacedStatement)
                         }
                         else -> {
@@ -177,13 +195,13 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
                     if (statement.isAssertion()) {
                         // todo hier wird ersetzt, um das ersetzte wieder zu ersetzen
                         //    kann man das in einem machen? statement replace with (label + spock assert)
-                        val statementWithSpockAssertion = replaceWithSpockAssert(statement as GrMethodCallExpression)
+                        val statementWithSpockAssertion = replaceWithSpockAssert(statement as GrMethodCallExpression, "expect")
                         currentBlock = addLabelToStatement(THEN, statementWithSpockAssertion)
                     }
                 }
                 EXPECT -> {
                     log.info("expect:")
-                    val block = handleExpectAndThen(statement, statements.getOrNull(idx + 1))
+                    val block = handleExpectAndThen(statement, statements.getOrNull(idx + 1), "that")
                     if (block != null) {
                         currentBlock = block
                     }
@@ -200,7 +218,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
                 }
                 THEN -> {
                     log.info("then:")
-                    val block = handleExpectAndThen(statement, statements.getOrNull(idx + 1))
+                    val block = handleExpectAndThen(statement, statements.getOrNull(idx + 1), "expect")
                     if (block != null) {
                         currentBlock = block
                     }
@@ -218,10 +236,10 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
 
     }
 
-    private fun handleExpectAndThen(statement: GrStatement, nextStatement: GrStatement?): Block? {
+    private fun handleExpectAndThen(statement: GrStatement, nextStatement: GrStatement?, hamcrestAssertionName: String): Block? {
         return when {
             statement.isAssertion() -> {
-                replaceWithSpockAssert(statement as GrMethodCallExpression)
+                replaceWithSpockAssert(statement as GrMethodCallExpression, hamcrestAssertionName)
                 null // stay in block
             }
             /**
@@ -252,7 +270,7 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
         return block
     }
 
-    private fun replaceWithSpockAssert(methodCallExpression: GrMethodCallExpression): GrExpression {
+    private fun replaceWithSpockAssert(methodCallExpression: GrMethodCallExpression, hamcrestAssertionName: String): GrExpression {
         val argumentList = methodCallExpression.argumentList
 
         var spockAssert: GrExpression? = null
@@ -262,6 +280,15 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
         val methodName = methodCallExpression.firstChild.text.replace("Assert.", "")
 
         when (methodName) {
+            // Hamcrest
+            "assertThat" -> {
+                spockAssert = createStatementFromText(
+                        methodCallExpression.text.replace("assertThat", hamcrestAssertionName)
+                )
+
+                val thatImportStatement = groovyFactory.createImportStatement("spock.util.matcher.HamcrestSupport.$hamcrestAssertionName", true, false, null, null)
+                (methodCallExpression.containingFile as GroovyFileImpl).addImport(thatImportStatement)
+            }
             "assertEquals" -> {
                 spockAssert = argumentList.withArgs(
                         two = { expected, actual ->

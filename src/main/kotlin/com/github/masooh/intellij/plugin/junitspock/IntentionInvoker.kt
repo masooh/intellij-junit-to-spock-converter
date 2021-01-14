@@ -17,10 +17,11 @@ class IntentionInvoker(private var project: Project,
      */
     fun findChildrenOfTypeAndInvokeIntention(
             clazz: Class<out GroovyPsiElement>,
-            intention: Intention
+            intention: Intention,
+            filter: (GroovyPsiElement) -> Boolean = { true }
     ) {
         val collection = PsiTreeUtil.findChildrenOfType(psiFile, clazz)
-        collection.forEach {
+        collection.filter(filter).forEach {
             editor.caretModel.moveToOffset(it.textOffset)
             val available = intention.isAvailable(project, editor, psiFile)
             if (available) {
