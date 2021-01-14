@@ -1,0 +1,17 @@
+= Groovy Plugin
+
+unter `plugins/groovy`
+
+== Spock Support
+
+- `org.jetbrains.plugins.groovy.ext.spock`
+- `intellij-community/plugins/groovy/src/META-INF/spock-support.xml`
+
+== Formatting
+
+[source,xml]
+.plugin.xml
+----
+<lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
+----
+

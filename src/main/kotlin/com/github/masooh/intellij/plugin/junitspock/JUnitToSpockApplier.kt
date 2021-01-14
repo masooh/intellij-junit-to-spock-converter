@@ -1,6 +1,7 @@
 package com.github.masooh.intellij.plugin.junitspock
 
 import com.github.masooh.intellij.plugin.junitspock.Block.*
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
@@ -12,8 +13,11 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.elementType
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -70,6 +74,24 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
         /* TODO Wicket feature: tester.assertComponent(FILE_LIST_PATH, ListView.class) -> then: (nur tester.assertX)
             nicht tester.lastRenderedPage.add(checkEventBehavior) oder tester.executeAjaxEvent(NEXT_STEP_LINK_PATH, "onclick")
          */
+
+        /*
+            TODO #15 reformat code
+               man kann nicht generell zwischen when: then: Leerzeile einfügen, könnte schon eine da sein
+               -> prüfen wie das der CodeStyleManager macht
+               com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl.reformatText(com.intellij.psi.PsiFile, com.intellij.formatting.FormatTextRanges, com.intellij.openapi.editor.Editor)
+
+            TODO  Tutorial Bsp durcharbeiten
+                https://jetbrains.org/intellij/sdk/docs/tutorials/custom_language_support/formatter.html?search=format
+
+         */
+//        CodeStyle.getLanguageSettings(psiFile).SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
+//
+//        WriteCommandAction.writeCommandAction(project).run(ThrowableRunnable<RuntimeException> {
+//            CodeStyleManager.getInstance(project).reformatText(myFixture.getFile(),
+//                    ContainerUtil.newArrayList(myFixture.getFile().getTextRange()))
+//        })
+
         optimizeImports()
     }
 
@@ -145,9 +167,9 @@ class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
                     method.prevSibling.delete()
                 }
                 if (method.prevSibling.elementType == GroovyElementTypes.NL) {
-                    // todo count \n\n and remove one
+                    // replaces /n/n with /n, if this would also replace more linebreaks is unclear
                     method.prevSibling.replaceElement(
-                            groovyFactory.createLineTerminator(/* n - 1 */)
+                            groovyFactory.createLineTerminator(1)
                     )
 
                 }
