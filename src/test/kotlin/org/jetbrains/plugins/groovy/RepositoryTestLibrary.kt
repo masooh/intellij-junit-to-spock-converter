@@ -3,12 +3,12 @@ package org.jetbrains.plugins.groovy
 
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.project.IntelliJProjectConfiguration
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 internal class RepositoryTestLibrary : TestLibrary {
@@ -36,23 +36,33 @@ internal class RepositoryTestLibrary : TestLibrary {
                 libraryModel.addRoot(root.file, root.type)
             }
         }
-        libraryModel.commit()
-        tableModel.commit()
+        WriteAction.runAndWait<Exception> {
+            libraryModel.commit()
+            tableModel.commit()
+        }
         model.findLibraryOrderEntry(library)!!.scope = myDependencyScope
     }
 
     companion object {
+
         fun loadRoots(project: Project?, coordinates: String?): Collection<OrderRoot> {
             val libraryProperties = RepositoryLibraryProperties(coordinates, true)
-            val roots = JarRepositoryManager.loadDependenciesModal(project!!, libraryProperties, false,
-                    false, null, remoteRepositoryDescriptions)
+            val roots = JarRepositoryManager.loadDependenciesModal(
+                project!!, libraryProperties, false,
+                false, null, remoteRepositoryDescriptions
+            )
             assert(!roots.isEmpty())
             return roots
         }
 
         private val remoteRepositoryDescriptions: List<RemoteRepositoryDescription>?
             get() {
-                val remoteRepositoryDescriptions = IntelliJProjectConfiguration.getRemoteRepositoryDescriptions()
+                // This line from the original code does not work as it assumes we are execyting intellij from
+                // inside the intellij checkout, while in we are actually executing from the gradle download location
+                //val remoteRepositoryDescriptions = IntelliJProjectConfiguration.getRemoteRepositoryDescriptions()
+
+                // However, this works fine for our purposes
+                val remoteRepositoryDescriptions = RemoteRepositoryDescription.DEFAULT_REPOSITORIES
                 return remoteRepositoryDescriptions.map { repository ->
                     RemoteRepositoryDescription(repository.id, repository.name, repository.url)
                 }

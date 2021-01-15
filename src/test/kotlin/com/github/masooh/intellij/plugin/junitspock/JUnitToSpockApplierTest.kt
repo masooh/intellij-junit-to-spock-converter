@@ -1,38 +1,27 @@
-package com.github.masooh.intellij.plugin.groovyfier
+package com.github.masooh.intellij.plugin.junitspock
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.psi.PsiFile
-import com.intellij.testFramework.TestActionEvent
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.openapi.project.DumbService
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
-class JUnitToSpockApplierTest : LightJavaCodeInsightFixtureTestCase() {
+class JUnitToSpockApplierTest : LightGroovyTestCase() {
 
     override fun getTestDataPath() = "src/test/resources/testdata"
+
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        // we need to add all used libraries so that annotations and types can be resolved
+        return GroovyProjectDescriptors.GROOVY_2_5_JUNIT4_HAMCREST
+    }
 
     fun testName() {
         // copies from #getTestDataPath to test project and opens in editor
         val psiFile = myFixture.configureByFile("BookTest.groovy") as GroovyFile
 
-//        myFixture.testAction(ConvertJavaToGroovy())
-        testAction(ConvertJavaToGroovy(), psiFile)
-
-        myFixture.checkResultByFile("BookTestTransformed.groovy")
-    }
-
-    /** inspired by myFixture.testAction
-     */
-    private fun testAction(action: AnAction, psiFile: PsiFile): Presentation? {
-        val e = TestActionEvent(action) // hier Rückbezug was passiert damit?
-//        action.beforeActionPerformedUpdate(e)
-        if (e.presentation.isEnabled && e.presentation.isVisible) {
-//            action.actionPerformed(e)
-            // an dieser Stelle gehen wir schon davon aus, dass es eine Groovy Datei ist
-            // -> Editor beibringen, dass Inhalt Groovy ist
-            // GroovyFixesApplier.applyGroovyFixes(event) geht evtl. auch
-            JUnitToSpockApplier(e, psiFile).transformToSpock()
+        DumbService.getInstance(project).runWhenSmart {
+            JUnitToSpockApplier(project, editor, psiFile).transformToSpock()
         }
-        return e.presentation
+        myFixture.checkResultByFile("BookTestTransformed.groovy")
     }
 }

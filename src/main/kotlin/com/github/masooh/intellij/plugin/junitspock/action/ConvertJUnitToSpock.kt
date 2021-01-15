@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -44,8 +45,10 @@ class ConvertJUnitToSpock : AnAction() {
         JavaToGroovyFileHelper.createGroovyRootAndMoveFile(project, currentFile) { groovyPsiFile ->
             replaceCurlyBracesInAnnotationAttributes(groovyPsiFile, project)
 
+            val project: Project = event.project!!
+            val editor: Editor = event.getRequiredData(PlatformDataKeys.EDITOR)
             GroovyFixesApplier.applyGroovyFixes(event, groovyPsiFile)
-            JUnitToSpockApplier(event, groovyPsiFile).transformToSpock()
+            JUnitToSpockApplier(project, editor, groovyPsiFile).transformToSpock()
         }
 
     }

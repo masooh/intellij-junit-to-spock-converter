@@ -1,5 +1,6 @@
-package com.github.masooh.intellij.plugin.groovyfier
+package com.github.masooh.intellij.plugin.junitspock
 
+import com.github.masooh.intellij.plugin.junitspock.action.ConvertJavaToGroovy
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class ConvertJavaToGroovyTest : LightJavaCodeInsightFixtureTestCase() {

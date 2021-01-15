@@ -6,11 +6,11 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 
-open class LibraryLightProjectDescriptor(private val myLibrary: TestLibrary) : DefaultLightProjectDescriptor() {
+open class LibraryLightProjectDescriptor(private vararg val libraries: TestLibrary) : DefaultLightProjectDescriptor() {
 
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
         super.configureModule(module, model, contentEntry)
-        myLibrary.addTo(module, model)
+        libraries.forEach { it.addTo(module, model) }
     }
 
 }

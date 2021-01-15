@@ -36,13 +36,11 @@ enum class Block {
         get() = this.name.toLowerCase()
 }
 
-class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
+class JUnitToSpockApplier(private val project: Project,private val  editor: Editor , private val psiFile: PsiFile) {
     companion object {
         private val log = Logger.getInstance(JUnitToSpockApplier::class.java)
     }
 
-    private val project: Project = event.project!!
-    private val editor: Editor = event.getRequiredData(PlatformDataKeys.EDITOR)
     private val typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
 
     private val groovyFactory
