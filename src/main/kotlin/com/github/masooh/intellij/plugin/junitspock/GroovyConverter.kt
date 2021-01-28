@@ -8,9 +8,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.actions.CleanupInspectionUtil
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -18,18 +17,17 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertJavaStyleArrayIntention
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention
 import org.jetbrains.plugins.groovy.intentions.style.RemoveRedundantClassPropertyIntention
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import java.util.*
 
-object GroovyFixesApplier {
-    fun applyGroovyFixes(event: AnActionEvent, psiFile: PsiFile) {
-        val project = event.project ?: return
-        val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-
+object GroovyConverter {
+    fun applyGroovyFixes(psiFile: PsiFile, project: Project, editor: Editor) {
         WriteCommandAction.runWriteCommandAction(project) {
-            val intentionInvoker = IntentionInvoker(project, psiFile, editor);
+            val intentionInvoker = IntentionInvoker(project, psiFile, editor)
 
             /*
                 List of Groovy Intention classes can be found here:
@@ -115,4 +113,34 @@ object GroovyFixesApplier {
                 .map { it as LocalInspectionToolWrapper }
                 .toList()
     }
+
+    fun replaceCurlyBracesInAnnotationAttributes(psiFile: PsiFile, project: Project) {
+        val typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            // TODO alle Annotationen, nicht nur von Klasse
+            val classAnnotations = typeDefinition.annotations
+            for (classAnnotation in classAnnotations) {
+                val attributes = classAnnotation.parameterList.attributes
+                if (attributes.isNotEmpty()) {
+                    val factory = GroovyPsiElementFactory.getInstance(project)
+                    val annotation = factory.createAnnotationFromText("@Annotation(att=[1])")
+                    val attributeValue = annotation.parameterList.attributes[0].value
+
+                    for (attribute in attributes) {
+                        val annotationMemberValue = attribute.value
+
+                        if ("{" == annotationMemberValue!!.firstChild.text && "}" == annotationMemberValue.lastChild.text) {
+                            // { -> [
+                            annotationMemberValue.firstChild.replace(attributeValue!!.firstChild)
+
+                            // } -> ]
+                            annotationMemberValue.lastChild.replace(attributeValue.lastChild)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
