@@ -1,6 +1,9 @@
+package testdata.junit4ToSpock.classAndFeature
+
+
 import spock.lang.Specification
 
-class SimpleTest extends Specification {
+class Testcase extends Specification {
 
 
     def "always true"() {

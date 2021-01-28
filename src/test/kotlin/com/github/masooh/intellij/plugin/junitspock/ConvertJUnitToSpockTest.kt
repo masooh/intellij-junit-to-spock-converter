@@ -1,30 +1,18 @@
 package com.github.masooh.intellij.plugin.junitspock
 
-import com.intellij.openapi.project.DumbService
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+class Junit4ToSpockTest : BaseAcceptanceTest() {
+    override fun getTestPath() = "junit4ToSpock"
 
-class ConvertJavaToGroovyTest : LightGroovyTestCase() {
+    fun testClassAndFeature() = convertAndCheck()
 
-    override fun getTestDataPath() = "src/test/resources/testdata"
+    fun testBeforeAfterMethods() = convertAndCheck()
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        // we need to add all used libraries so that annotations and types can be resolved
-        return GroovyProjectDescriptors.GROOVY_2_5_JUNIT4_SPOCK_HAMCREST
-    }
+    fun testAssertsAlsoWithMessages() = convertAndCheck()
 
-    // must start with 'test' prefix
-    fun testClassAndFeatureAreConverted() {
-        // copies from #getTestDataPath to test project and opens in editor
-        val psiFile = myFixture.configureByFile("SimpleTest.groovy")
+    fun testGivenWhenThenAnalysis() = convertAndCheck()
 
-        DumbService.getInstance(project).runWhenSmart {
-            GroovyConverter.replaceCurlyBracesInAnnotationAttributes(psiFile, project)
-            GroovyConverter.applyGroovyFixes(psiFile, project, editor)
-            JUnitToSpockApplier(project, editor, psiFile).transformToSpock()
-        }
+    // will be activated with #3
+    fun ignoreReuseGivenWhenThenComments() = convertAndCheck()
 
-        myFixture.checkResultByFile("SimpleTestTransformed.groovy", true)
-    }
+    fun testExpectArgumentException() = convertAndCheck()
 }
