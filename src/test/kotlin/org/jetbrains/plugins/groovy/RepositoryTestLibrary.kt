@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.project.IntelliJProjectConfiguration
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 internal class RepositoryTestLibrary : TestLibrary {
@@ -24,7 +23,6 @@ internal class RepositoryTestLibrary : TestLibrary {
     constructor(vararg coordinates: String) : this(DependencyScope.COMPILE, *coordinates)
 
     constructor(coordinates: String, dependencyScope: DependencyScope) : this(dependencyScope, coordinates)
-
 
     override fun addTo(module: Module, model: ModifiableRootModel) {
         val tableModel = model.moduleLibraryTable.modifiableModel
@@ -42,17 +40,27 @@ internal class RepositoryTestLibrary : TestLibrary {
     }
 
     companion object {
-        fun loadRoots(project: Project?, coordinates: String?): Collection<OrderRoot> {
+        fun loadRoots(project: Project, coordinates: String?): Collection<OrderRoot> {
             val libraryProperties = RepositoryLibraryProperties(coordinates, true)
-            val roots = JarRepositoryManager.loadDependenciesModal(project!!, libraryProperties, false,
-                    false, null, remoteRepositoryDescriptions)
+            val roots = JarRepositoryManager.loadDependenciesModal(
+                    project, libraryProperties, false,
+                    false, null, remoteRepositoryDescriptions
+            )
             assert(!roots.isEmpty())
             return roots
         }
 
-        private val remoteRepositoryDescriptions: List<RemoteRepositoryDescription>?
+        private val remoteRepositoryDescriptions: List<RemoteRepositoryDescription>
             get() {
-                val remoteRepositoryDescriptions = IntelliJProjectConfiguration.getRemoteRepositoryDescriptions()
+                /*
+                    This line from the original code does not work as it assumes we are executing Intellij from
+                    inside the intellij checkout, while in we are actually executing from the gradle download location
+
+                    val remoteRepositoryDescriptions = IntelliJProjectConfiguration.getRemoteRepositoryDescriptions()
+
+                    However, this works fine for our purpose
+                 */
+                val remoteRepositoryDescriptions = RemoteRepositoryDescription.DEFAULT_REPOSITORIES
                 return remoteRepositoryDescriptions.map { repository ->
                     RemoteRepositoryDescription(repository.id, repository.name, repository.url)
                 }

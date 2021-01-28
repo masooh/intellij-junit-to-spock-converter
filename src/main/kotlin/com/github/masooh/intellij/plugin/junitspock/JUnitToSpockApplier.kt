@@ -1,14 +1,11 @@
 package com.github.masooh.intellij.plugin.junitspock
 
 import com.github.masooh.intellij.plugin.junitspock.Block.*
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
@@ -36,20 +33,15 @@ enum class Block {
         get() = this.name.toLowerCase()
 }
 
-class JUnitToSpockApplier(event: AnActionEvent, private val psiFile: PsiFile) {
+class JUnitToSpockApplier(private val project: Project, private val editor: Editor, private val psiFile: PsiFile) {
     companion object {
         private val log = Logger.getInstance(JUnitToSpockApplier::class.java)
     }
 
-    private val project: Project = event.project!!
-    private val editor: Editor = event.getRequiredData(PlatformDataKeys.EDITOR)
     private val typeDefinition = psiFile.getPsiClass() as GrTypeDefinition
 
     private val groovyFactory
         get() = GroovyPsiElementFactory.getInstance(project)
-
-    private val javaFactory
-        get() = JavaPsiFacade.getInstance(project).elementFactory
 
     fun transformToSpock() {
         WriteCommandAction.runWriteCommandAction(project, null, null, Runnable {

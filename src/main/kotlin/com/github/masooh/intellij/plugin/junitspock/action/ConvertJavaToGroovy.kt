@@ -1,6 +1,6 @@
 package com.github.masooh.intellij.plugin.junitspock.action
 
-import com.github.masooh.intellij.plugin.junitspock.GroovyFixesApplier
+import com.github.masooh.intellij.plugin.junitspock.GroovyConverter
 import com.github.masooh.intellij.plugin.junitspock.JavaToGroovyFileHelper
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.AnAction
@@ -33,10 +33,11 @@ class ConvertJavaToGroovy : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val project = requireNotNull(event.project)
         val currentFile = event.getRequiredData(PlatformDataKeys.VIRTUAL_FILE)
+        val editor = event.getRequiredData(PlatformDataKeys.EDITOR)
 
         JavaToGroovyFileHelper.createGroovyRootAndMoveFile(project, currentFile) { groovyPsiFile ->
             // TODO why must this be the first action otherwise exception
-            GroovyFixesApplier.applyGroovyFixes(event, groovyPsiFile)
+            GroovyConverter.applyGroovyFixes(groovyPsiFile, project, editor)
 
             /* TODO Groovy array handling
                 List<IdentAttachmentMetaData> documents = new ArrayList<>()
