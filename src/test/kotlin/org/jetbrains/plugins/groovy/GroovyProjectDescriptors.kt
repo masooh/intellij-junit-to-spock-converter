@@ -18,7 +18,8 @@ interface GroovyProjectDescriptors {
         val GROOVY_2_5: LightProjectDescriptor = LibraryLightProjectDescriptor(LIB_GROOVY_2_5)
         val GROOVY_3_0: LightProjectDescriptor = LibraryLightProjectDescriptor(LIB_GROOVY_3_0)
 
-        val GROOVY_2_5_JUNIT4_SPOCK_HAMCREST: LightProjectDescriptor = LibraryLightProjectDescriptor(LIB_GROOVY_2_5, LIB_JUNIT4, LIB_HAMCREST, LIB_SPOCK_1)
+        val GROOVY_2_5_JUNIT_SPOCK_1_HAMCREST: LightProjectDescriptor =
+                LibraryLightProjectDescriptor(LIB_GROOVY_2_5, LIB_SPOCK_1, LIB_JUNIT4, LIB_JUNIT5, LIB_HAMCREST)
         val LIB_GROOVY_LATEST = LIB_GROOVY_2_5
 
         val GROOVY_LATEST: LightProjectDescriptor = LibraryLightProjectDescriptor(LIB_GROOVY_LATEST)
