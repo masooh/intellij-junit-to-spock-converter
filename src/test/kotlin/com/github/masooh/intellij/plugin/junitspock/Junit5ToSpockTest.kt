@@ -6,5 +6,5 @@ class Junit5ToSpockTest : BaseAcceptanceTest() {
     fun testBeforeAfterAnnotations() = convertAndCheck()
 
     // will be fixed with: Support assertThrows() conversion, with and without variable declaration #21
-    fun ignoreAssertions() = convertAndCheck()
+    fun testAssertions() = convertAndCheck()
 }

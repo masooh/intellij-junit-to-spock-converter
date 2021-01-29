@@ -152,6 +152,7 @@ class JUnitToSpockApplier(private val project: Project, private val editor: Edit
         }
     }
 
+    // todo refactor this method, it's complex and growing
     private fun changeFeatureBody(method: GrMethod, exceptionClass: GrReferenceExpression?) {
         val statements = method.block?.statements
 
@@ -162,6 +163,21 @@ class JUnitToSpockApplier(private val project: Project, private val editor: Edit
                 null -> {
                     log.info("null:")
                     currentBlock = when {
+                        statement.isAssertThrows() -> {
+                            val arguments = (statement as GrMethodCallExpression).expressionArguments
+                            val throwsExceptionClass = arguments.first() as GrReferenceExpression
+
+                            // when: execution
+                            val replacedStatement: GrExpression = statement.replaceWithExpression(arguments[1], true)
+                            addLabelToStatement(WHEN, replacedStatement)
+
+                            // then: thrown(Exception)
+                            val thrownStatement = "then: thrown(${throwsExceptionClass.qualifiedReferenceName})"
+                            val thrownBlock = createStatementFromText<GrLabeledStatement>(thrownStatement)
+
+                            replacedStatement.addAfter(thrownBlock)
+                            THEN
+                        }
                         statement.isAssertion() -> {
                             val replacedStatement = replaceWithSpockAssert(statement as GrMethodCallExpression, "that")
                             addLabelToStatement(EXPECT, replacedStatement)
@@ -416,3 +432,14 @@ private fun GrStatement.isAssertion(): Boolean {
         false
     }
 }
+
+private fun GrStatement.isAssertThrows(): Boolean {
+    return if (this is GrMethodCallExpression) {
+        val text = this.firstChild.text
+        // with or without import
+        text == "assertThrows" || text == "Assertions.assertThrows"
+    } else {
+        false
+    }
+}
+
