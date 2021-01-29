@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     idea
+    jacoco // https://docs.gradle.org/current/userguide/jacoco_plugin.html
     id("org.jetbrains.intellij") version "0.4.21" // https://github.com/JetBrains/gradle-intellij-plugin
     kotlin("jvm") version "1.3.70"
     id("org.sonarqube") version "2.8"
@@ -25,6 +26,12 @@ intellij {
     // transitive dependencies has to added: https://github.com/JetBrains/gradle-intellij-plugin/issues/38
     setPlugins("Groovy", "java", "properties") // Bundled plugin dependencies
     updateSinceUntilBuild = false
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.isEnabled = true
+    }
 }
 
 tasks.withType<PublishTask> {
