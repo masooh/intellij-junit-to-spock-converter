@@ -2,6 +2,9 @@ import org.jetbrains.intellij.tasks.PublishTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // https://kotlinlang.org/docs/reference/using-gradle.html
+object Versions {
+    const val spring = "5.3.3"
+}
 
 plugins {
     idea
@@ -51,6 +54,17 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("stdlib-jdk7"))
     implementation(kotlin("stdlib-jdk8"))
+
+    /*
+       the following test dependencies break test execution
+       but are helpful for code completion and syntax check in src/test/resources/testdata
+       Test classpath is defined by Test#getProjectDescriptor()
+     */
+//    testImplementation("org.springframework:spring-context:${Versions.spring}")
+//    testImplementation("org.springframework:spring-test:${Versions.spring}")
+//    testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
+//    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+//    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
 tasks.withType<KotlinCompile> {
