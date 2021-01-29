@@ -13,7 +13,7 @@ abstract class BaseAcceptanceTest : LightGroovyTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         // we need to add all used libraries so that annotations and types can be resolved
-        return GroovyProjectDescriptors.GROOVY_2_5_JUNIT4_SPOCK_HAMCREST
+        return GroovyProjectDescriptors.GROOVY_2_5_JUNIT_SPOCK_1_HAMCREST
     }
 
     protected fun convertAndCheck() {

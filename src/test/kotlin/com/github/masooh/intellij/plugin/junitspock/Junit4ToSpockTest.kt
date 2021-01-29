@@ -15,4 +15,6 @@ class Junit4ToSpockTest : BaseAcceptanceTest() {
     fun ignoreReuseGivenWhenThenComments() = convertAndCheck()
 
     fun testExpectArgumentException() = convertAndCheck()
+
+    fun testSpringConfig() = convertAndCheck()
 }
