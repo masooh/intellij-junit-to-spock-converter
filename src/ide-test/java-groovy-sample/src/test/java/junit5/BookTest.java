@@ -1,15 +1,10 @@
 package junit5;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.*;
 import sample.Book;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BookTest {
 
@@ -43,10 +38,18 @@ class BookTest {
     }
 
     @Test
-    void expectArgumentException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> book.setPages(-1),
+    void throwsAcrossLines() {
+        assertThrows(IllegalArgumentException.class, () -> book.setPages(-1),
                                 "Negative page number must fail");
 
+    }
+
+    @Test
+    void throwsWithVariable() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> book.setPages(-1),
+                "Negative page number must fail");
+
+        assertEquals("pages must be greater 0", exception.getMessage());
     }
 
 }
