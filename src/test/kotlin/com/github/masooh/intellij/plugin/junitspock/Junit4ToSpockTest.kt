@@ -3,18 +3,18 @@ package com.github.masooh.intellij.plugin.junitspock
 class Junit4ToSpockTest : BaseAcceptanceTest() {
     override fun getTestPath() = "junit4ToSpock"
 
-    fun testClassAndFeature() = convertAndCheck()
+    fun testClassAndFeature() = junitToSpock()
 
-    fun testBeforeAfterMethods() = convertAndCheck()
+    fun testBeforeAfterMethods() = junitToSpock()
 
-    fun testAssertsAlsoWithMessages() = convertAndCheck()
+    fun testAssertsAlsoWithMessages() = junitToSpock()
 
-    fun testGivenWhenThenAnalysis() = convertAndCheck()
+    fun testGivenWhenThenAnalysis() = junitToSpock()
 
     // will be activated with #3
-    fun ignoreReuseGivenWhenThenComments() = convertAndCheck()
+    fun ignoreReuseGivenWhenThenComments() = junitToSpock()
 
-    fun testExpectArgumentException() = convertAndCheck()
+    fun testExpectArgumentException() = junitToSpock()
 
-    fun testSpringConfig() = convertAndCheck()
+    fun testSpringConfig() = junitToSpock()
 }

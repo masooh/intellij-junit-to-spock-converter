@@ -16,7 +16,7 @@ abstract class BaseAcceptanceTest : LightGroovyTestCase() {
         return GroovyProjectDescriptors.GROOVY_2_5_JUNIT_SPOCK_1_HAMCREST
     }
 
-    protected fun convertAndCheck() {
+    protected fun junitToSpock() {
         // otherwise class Book is not found and i.e. property style replacement does not work
         myFixture.copyDirectoryToProject("lib", "lib")
 
@@ -31,4 +31,20 @@ abstract class BaseAcceptanceTest : LightGroovyTestCase() {
 
         myFixture.checkResultByFile("${getTestPath()}/${getTestName(true)}/Spock.groovy", true)
     }
+
+    protected fun javaToGroovy() {
+        // otherwise class Book is not found and i.e. property style replacement does not work
+        myFixture.copyDirectoryToProject("lib", "lib")
+
+        // copies from #getTestDataPath to test project and opens in editor
+        val psiFile = myFixture.configureByFile("${getTestPath()}/${getTestName(true)}/Java.groovy")
+
+        DumbService.getInstance(project).runWhenSmart {
+            GroovyConverter.replaceCurlyBracesInAnnotationAttributes(psiFile, project)
+            GroovyConverter.applyGroovyFixes(psiFile, project, editor)
+        }
+
+        myFixture.checkResultByFile("${getTestPath()}/${getTestName(true)}/Groovy.groovy", true)
+    }
+
 }
