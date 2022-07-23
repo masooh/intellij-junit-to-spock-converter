@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/groovyfier.iml" filepath="$PROJECT_DIR$/.idea/groovyfier.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/groovyfier.main.iml" filepath="$PROJECT_DIR$/.idea/modules/groovyfier.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/groovyfier.test.iml" filepath="$PROJECT_DIR$/.idea/modules/groovyfier.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/src/ide-test/java-groovy-sample/java-groovy.iml" filepath="$PROJECT_DIR$/src/ide-test/java-groovy-sample/java-groovy.iml" />
     </modules>
   </component>
 </project>

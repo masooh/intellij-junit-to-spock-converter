@@ -1,4 +1,3 @@
-import org.jetbrains.intellij.tasks.PublishTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // https://kotlinlang.org/docs/reference/using-gradle.html
@@ -9,9 +8,9 @@ object Versions {
 plugins {
     idea
     jacoco // https://docs.gradle.org/current/userguide/jacoco_plugin.html
-    id("org.jetbrains.intellij") version "0.4.21" // https://github.com/JetBrains/gradle-intellij-plugin
-    kotlin("jvm") version "1.3.70"
-    id("org.sonarqube") version "2.8"
+    id("org.jetbrains.intellij") version "1.7.0" // https://github.com/JetBrains/gradle-intellij-plugin
+    kotlin("jvm") version "1.7.10"
+    id("org.sonarqube") version "3.4.0.2513"
 }
 
 sonarqube {
@@ -24,24 +23,13 @@ sonarqube {
 }
 
 intellij {
-    pluginName = "JUnit to Spock Converter"
-    version = "2019.3.3" // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
+    version.set("2019.3.3") // overrides plugin.xml since-build in case of conflict, https://www.jetbrains.com/intellij-repository/releases
     // transitive dependencies has to added: https://github.com/JetBrains/gradle-intellij-plugin/issues/38
-    setPlugins("Groovy", "java", "properties") // Bundled plugin dependencies
-    updateSinceUntilBuild = false
+    plugins.set(listOf("Groovy", "java", "properties")) // Bundled plugin dependencies
+    pluginName.set("JUnit to Spock Converter")
+    updateSinceUntilBuild.set(false)
 }
 
-tasks.jacocoTestReport {
-    reports {
-        xml.isEnabled = true
-    }
-}
-
-tasks.withType<PublishTask> {
-    if (project.hasProperty("intellijPublishToken")) {
-        token(project.property("intellijPublishToken"))
-    }
-}
 
 group = "com.github.masooh.intellij.plugin.junitspock"
 version = "0.2" // overrides plugin.xml version in case of conflict
@@ -67,6 +55,20 @@ dependencies {
 //    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+tasks {
+    jacocoTestReport {
+        reports {
+            xml.isEnabled = true
+        }
+    }
+
+    publishPlugin {
+        token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = "11"
+        }
+    }
 }
