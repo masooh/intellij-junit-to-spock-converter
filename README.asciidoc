@@ -1,5 +1,7 @@
 = JUnit to Spock Converter
 
+image::https://github.com/masooh/intellij-junit-to-spock-converter/actions/workflows/test.yml/badge.svg[GitHub Actions Build Pipeline]
+
 image::https://dev.azure.com/melius-coder/Groovyfier/_apis/build/status/masooh.groovyfier?branchName=master[Build Status, link=https://dev.azure.com/melius-coder/Groovyfier/_build/latest?definitionId=1&branchName=master]
 
 image::https://sonarcloud.io/api/project_badges/measure?project=masooh_groovyfier&metric=ncloc[Lines of Code, link=https://sonarcloud.io/dashboard?id=masooh_groovyfier]
