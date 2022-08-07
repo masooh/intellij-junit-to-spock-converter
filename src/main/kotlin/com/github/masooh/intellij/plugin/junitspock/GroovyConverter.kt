@@ -3,7 +3,6 @@ package com.github.masooh.intellij.plugin.junitspock
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInspection.InspectionEngine
-import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.actions.CleanupInspectionUtil
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
@@ -11,9 +10,9 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.util.PairProcessor
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertJavaStyleArrayIntention
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention
 import org.jetbrains.plugins.groovy.intentions.style.RemoveRedundantClassPropertyIntention
@@ -22,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import java.util.*
 
 object GroovyConverter {
     fun applyGroovyFixes(psiFile: PsiFile, project: Project, editor: Editor) {
@@ -66,7 +64,7 @@ object GroovyConverter {
 
         if (groovyInspections.isNotEmpty()) {
             // inspired by CleanupInspectionIntention
-            val problemDescriptors = inspectFileForProblems(project, psiFile, groovyInspections)
+            val problemDescriptors = inspectFileForProblems(psiFile, groovyInspections)
 
             if (problemDescriptors.isEmpty()) {
                 return
@@ -86,17 +84,13 @@ object GroovyConverter {
     }
 
 
-    private fun inspectFileForProblems(project: Project, file: PsiFile, groovyInspections: List<LocalInspectionToolWrapper>): List<ProblemDescriptor> {
-        val problemDescriptors = ProgressManager.getInstance().runProcess<Map<String, List<ProblemDescriptor>>>({
-            val inspectionManager = InspectionManager.getInstance(project)
-            InspectionEngine.inspectEx(groovyInspections, file, inspectionManager, false, EmptyProgressIndicator())
-        }, EmptyProgressIndicator())
+    private fun inspectFileForProblems(file: PsiFile, groovyInspections: List<LocalInspectionToolWrapper>): List<ProblemDescriptor> {
+        val map: MutableMap<LocalInspectionToolWrapper, MutableList<ProblemDescriptor>> = InspectionEngine.inspectEx(
+            groovyInspections, file, file.textRange, file.textRange, false, false, true, EmptyProgressIndicator(),
+            PairProcessor.alwaysTrue()
+        )
 
-        val descriptions = ArrayList<ProblemDescriptor>()
-        for (group in problemDescriptors.values) {
-            descriptions.addAll(group)
-        }
-        return descriptions
+        return map.flatMap { it.value }
     }
 
     private fun findGroovyInspections(): List<LocalInspectionToolWrapper> {

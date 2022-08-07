@@ -2,12 +2,12 @@ package com.github.masooh.intellij.plugin.junitspock
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.*
+import com.intellij.psi.util.childrenOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
 private val LOG = Logger.getInstance("junitspock.PsiHelper")
 

@@ -30,7 +30,7 @@ enum class Block {
     EXPECT, GIVEN, WHEN, THEN;
 
     val label
-        get() = this.name.toLowerCase()
+        get() = this.name.lowercase()
 }
 
 class JUnitToSpockApplier(private val project: Project, private val editor: Editor, private val psiFile: PsiFile) {
