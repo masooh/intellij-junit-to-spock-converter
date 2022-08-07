@@ -12,9 +12,9 @@ class Testcase extends Specification {
         Book bookToTest = new Book()
 
         when:
-        bookToTest.title = "title"
+        bookToTest.title = 'title'
 
         then:
-        bookToTest.title == "title"
+        bookToTest.title == 'title'
     }
 }

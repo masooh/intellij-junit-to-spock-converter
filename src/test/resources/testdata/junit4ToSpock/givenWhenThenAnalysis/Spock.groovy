@@ -16,7 +16,7 @@ class Testcase extends Specification {
     def "given when then analysis"() {
         // g
         given:
-        String title = "title"
+        String title = 'title'
         Book bookToTest = new Book()
         bookToTest.pages = 10
         bookToTest.title = title
@@ -29,7 +29,7 @@ class Testcase extends Specification {
 
         // t
         then:
-        bookToTest.title == "title"
+        bookToTest.title == 'title'
 
         int pages = bookToTest.pages // assignment stays in then
         pages == 34
@@ -55,6 +55,6 @@ class Testcase extends Specification {
 
         // e
         expect:
-        book.prefixTitle("blub")
+        book.prefixTitle('blub')
     }
 }

@@ -42,6 +42,6 @@ class Testcase extends Specification {
 
         then: "Negative page number must fail"
         Exception exception = thrown(IllegalArgumentException)
-        exception.message == "pages must be greater 0"
+        exception.message == 'pages must be greater 0'
     }
 }

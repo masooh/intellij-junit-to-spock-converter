@@ -14,7 +14,7 @@ class SpringTest extends Specification {
         @Bean
         Book cleanCode() {
             Book book = new Book()
-            book.title = "Clean Code"
+            book.title = 'Clean Code'
             return book
         }
     }
@@ -27,6 +27,6 @@ class SpringTest extends Specification {
         expect:
         book != null
 
-        book.title == "Clean Code"
+        book.title == 'Clean Code'
     }
 }
