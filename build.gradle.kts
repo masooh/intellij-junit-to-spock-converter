@@ -39,7 +39,7 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -67,11 +67,11 @@ tasks {
     }
 
     compileKotlin {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.majorVersion
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_17.majorVersion
     }
 
     compileTestKotlin {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.majorVersion
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_17.majorVersion
     }
 
     jacocoTestReport {
