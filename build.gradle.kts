@@ -8,8 +8,9 @@ object Versions {
 plugins {
     idea
     jacoco // https://docs.gradle.org/current/userguide/jacoco_plugin.html
-    id("org.jetbrains.intellij") version "1.13.3" // https://github.com/JetBrains/gradle-intellij-plugin
-    kotlin("jvm") version "1.7.10"
+    id("org.jetbrains.intellij") version "1.17.4" // https://github.com/JetBrains/gradle-intellij-plugin
+    // id("org.jetbrains.intellij.platform") version "2.2.0"
+    kotlin("jvm") version "1.9.25"
     id("org.sonarqube") version "3.4.0.2513"
 }
 
